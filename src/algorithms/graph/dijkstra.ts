@@ -1,5 +1,5 @@
 import { Heap } from 'heap-js';
-import { Graph } from './types';
+import type { ExtendedGraph } from 'src/algorithms/graph/types';
 
 class Vertice {
     constructor(id: number, dis: number) {
@@ -10,7 +10,7 @@ class Vertice {
     dis: number;
 }
 
-export function dijkstra(s: number, g: Graph): { dis: Array<number>, from: Array<number> } {
+export function dijkstra(s: number, g: ExtendedGraph, forbiddenNodes?: Map<number, boolean>, forbiddenEdges?: Map<string, boolean>): { dis: Array<number>, from: Array<number> } {
     let dis: Array<number> = [];
     let from: Array<number> = [];
     let mk: Array<boolean> = [];
@@ -19,7 +19,7 @@ export function dijkstra(s: number, g: Graph): { dis: Array<number>, from: Array
 
     from[s] = 0;
     dis[s] = 0;
-    let q = new Heap<Vertice>((a: Vertice, b: Vertice) => b.dis - a.dis);
+    let q = new Heap<Vertice>((a: Vertice, b: Vertice) => a.dis - b.dis);
     q.push(new Vertice(s, 0));
     while (!q.isEmpty()) {
         while (!q.isEmpty() &&
@@ -31,12 +31,16 @@ export function dijkstra(s: number, g: Graph): { dis: Array<number>, from: Array
         let { id: u } = q.pop() as Vertice;
         mk[u] = true;
         for (let { v, w } of g.getOutEdges(u)) {
-            console.log(u, v, w);
-            console.log(`dis[${u}]=${dis[u]},dis[${v}]=${dis[v]}`, mk[v], dis[u] + w < dis[v]);
+            if (forbiddenNodes !== undefined &&
+                forbiddenNodes.get(v))
+                continue;
+            if (forbiddenEdges !== undefined &&
+                (forbiddenEdges.get(`${u},${v}`) || forbiddenEdges.get(`${v},${u}`)))
+                continue;
             if (!mk[v] && dis[u] + w < dis[v]) {
                 dis[v] = dis[u] + w;
                 from[v] = u;
-                q.push(new Vertice(v, dis[v]))
+                q.push(new Vertice(v, dis[v]));
             }
         }
     }

@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from 'builtin-modules'
+import sveltePlugin from "esbuild-svelte";
+import autoPreprocess from "svelte-preprocess";
 
 const banner =
 	`/*
@@ -51,5 +53,12 @@ esbuild.build({
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
+	plugins: [sveltePlugin({
+		compileOptions: {
+			css: true,
+			dev: !prod,
+		},
+		preprocess: autoPreprocess(),
+	})],
 	outfile: 'main.js',
 }).catch(() => process.exit(1));

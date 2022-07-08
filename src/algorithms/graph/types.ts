@@ -19,34 +19,32 @@ class Edge {
 }
 
 export class Graph {
-    n: number = 0;
+    n: number;
     g: Array<Edge>;
     head: Array<number>;
-    exist: Map<string, number>;
+    edgeID: Map<string, number>;
 
     constructor() {
-        this.g = [new Edge(0, 0, 0, 0)];
+        this.n = 0;
+        this.g = [new Edge(0, 0, 0, -1)];
         this.head = [0];
-        this.exist = new Map<string, number>();
+        this.edgeID = new Map<string, number>();
     }
 
     addEdge(u: number, v: number, w: number): void {
-        if (this.exist.has(`${u},${v},${w}`)) return;
-        this.n = Math.max(this.n, Math.max(u, v));
-        this.g.push(new Edge(u, v, w, this.head[u] ?? 0));
+        if (this.edgeID.has(`${u},${v}`)) return;
+        this.g.push(new Edge(u, v, w, this.head[u] ?? -1));
         this.head[u] = this.g.length - 1;
-        this.exist.set(`${u},${v},${w}`, this.head[u]);
+        this.edgeID.set(`${u},${v}`, this.head[u]);
     }
-
     getOutEdges(u: number): Array<Edge> {
         if (this.head[u] === undefined) return [];
         let ret = new Array<Edge>();
-        for (let i = this.head[u]; i; i = this.g[i].next) {
+        for (let i = this.head[u]; this.g[i] !== undefined; i = this.g[i].next) {
             ret.push(this.g[i]);
         }
         return ret;
     }
-
     getN(): number {
         return this.n;
     }
@@ -64,5 +62,37 @@ export class Graph {
             ret += `head[${i}]=${this.head[i]}\n`;
         }
         return ret;
+    }
+}
+
+export class ExtendedGraph extends Graph {
+    nameToID: Map<any, number>;
+    IDToName: Map<number, any>;
+
+    constructor() {
+        super();
+        this.nameToID = new Map<any, number>();
+        this.IDToName = new Map<number, any>();
+    }
+
+    addVertice(x: any) {
+        this.n++;
+        this.nameToID.set(x, this.n);
+        this.IDToName.set(this.n, x);
+        return this.n;
+    }
+    getID(x: any) { return this.nameToID.get(x); }
+
+    getName(u: number) { return this.IDToName.get(u); }
+    getOutEdgesExtended(u: any): Array<Edge> {
+        return super
+            .getOutEdges(this.getID(u) ?? this.addVertice(u));
+    }
+
+    addEdgeExtended(u: any, v: any, w: number) {
+        super.addEdge(
+            this.getID(u) ?? this.addVertice(u),
+            this.getID(v) ?? this.addVertice(v),
+            w);
     }
 }

@@ -1,10 +1,11 @@
 import { normalizePath, Notice, Plugin, MarkdownView, TFile } from 'obsidian';
 
-import { Graph } from "src/algorithms/graph/types"
+import { ExtendedGraph, Graph } from "src/algorithms/graph/types"
 import { getShortestPath } from './algorithms/graph/getShortestPath';
-import { getAllPaths } from './algorithms/graph/getAllPaths';
-import { AllPathsModal, ShortestPathModal } from './modals';
-import { PathView, VIEW_TYPE_PATHVIEW } from './view';
+import { getAllPathsAsGraph } from './algorithms/graph/getAllPathsAsGraph';
+import { AllPathsAsGraphModal, AllPathsModal, ShortestPathModal } from './modals';
+import { PathGraphView, PathView, VIEW_TYPE_PATHGRAPHVIEW, VIEW_TYPE_PATHVIEW } from './view';
+import { getNextPath } from './algorithms/graph/getNextPath';
 
 // Remember to rename these classes and interfaces!
 
@@ -19,6 +20,7 @@ export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	async onload() {
+		console.log("Loading Path Finder plugin");
 		await this.loadSettings();
 
 		this.addCommand({
@@ -30,28 +32,35 @@ export default class MyPlugin extends Plugin {
 		});
 
 		this.addCommand({
+			id: 'find-all-paths-as-graph',
+			name: 'Find All Path As Graph',
+			callback: () => {
+				new AllPathsAsGraphModal(this.app, this.findAllPathsAsGraph.bind(this)).open();
+			}
+		});
+
+		this.addCommand({
 			id: 'find-all-paths',
 			name: 'Find All Path',
 			callback: () => {
 				new AllPathsModal(this.app, this.findAllPaths.bind(this)).open();
 			}
 		});
-		// this.addCommand({
-		// 	id: 'open-pathview',
-		// 	name: 'Open PathView',
-		// 	callback: () => {
-		// 		this.activatePathView();
-		// 	}
-		// });
 
-		// this.registerView(
-		// 	VIEW_TYPE_PATHVIEW,
-		// 	(leaf) => new PathView(leaf)
-		// );
+		this.registerView(
+			VIEW_TYPE_PATHGRAPHVIEW,
+			(leaf) => new PathGraphView(leaf)
+		);
+
+		this.registerView(
+			VIEW_TYPE_PATHVIEW,
+			(leaf) => new PathView(leaf)
+		);
 	}
 
 	onunload() {
-		// this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
 	}
 
 	findShortestPath(from: string, to: string): void {
@@ -69,28 +78,18 @@ export default class MyPlugin extends Plugin {
 			return;
 		}
 
-		let { g, filePathToID, IDToFilePath } = this.buildGraphFromLinks();
+		let g = this.buildGraphFromLinks();
 
-		let s = filePathToID.get(from) as number, t = filePathToID.get(to) as number;
-
-		let route = getShortestPath(s, t, g);
-		if (route[0] == 0) {
-			new Notice("From and To are the same file!");
-		}
-		else if (route[0] == -1) {
+		let path = getShortestPath(from, to, g);
+		if (path === undefined) {
 			new Notice("From has no route that lead to To.");
 		}
 		else {
-			let data = `There are ${route[0] + 1} notes in the route.`
-			for (let i = 1; i < route.length; i++) {
-				data += `\n${IDToFilePath.get(route[i])}`;
-				console.log(route[i]);
-			}
-			new Notice(data);
+			this.openPathGraphView(from, to, path);
 		}
 	}
 
-	findAllPaths(from: string, to: string, length: number) {
+	findAllPathsAsGraph(from: string, to: string, length: number) {
 		from = normalizePath(from);
 		to = normalizePath(to);
 		let { vault, workspace } = app;
@@ -105,81 +104,112 @@ export default class MyPlugin extends Plugin {
 			return;
 		}
 
-		let { g, filePathToID, IDToFilePath } = this.buildGraphFromLinks();
+		let g = this.buildGraphFromLinks();
 
-		let s = filePathToID.get(from) as number, t = filePathToID.get(to) as number;
-
-		let paths = getAllPaths(s, t, length, g);
-		if (s == t) {
+		let paths = getAllPathsAsGraph(from, to, length, g);
+		new Notice("Done!");
+		if (from === to) {
 			new Notice(`${from} and ${to} are the same file!`);
 		}
-		else if (paths.length == 0) {
+		else if (!paths) {
 			new Notice(`${from} has no path that lead to ${to}.`);
 		}
 		else {
-			let data = `There are ${paths.length} paths.\n`
-			for (let i of paths) {
-				data += "\n---\n"
-				for (let j of i) {
-					data += `${IDToFilePath.get(j)}\n`
-				}
-			}
-			new Notice(data);
-			const filePath = "_log.md";
-			if (!adapter.exists(filePath)) {
-				vault.create(filePath, data);
-			}
-			else {
-				adapter.write(filePath, data);
-			}
-			let leaf = workspace.getLeaf(true);
-			leaf.openFile(vault.getAbstractFileByPath(filePath) as TFile);
+			this.openPathGraphView(from, to, paths);
 		}
 	}
 
-	buildGraphFromLinks(): {
-		g: Graph;
-		filePathToID: Map<string, number>;
-		IDToFilePath: Map<number, string>;
-	} {
-		let g = new Graph();
-		let filePathToID = new Map<string, number>();
-		let IDToFilePath = new Map<number, string>();
-		let n = 0, m = 0;
+	findAllPaths(from: string, to: string, length: number, time: number) {
+		from = normalizePath(from);
+		to = normalizePath(to);
+		let { vault, workspace } = app;
+		let { adapter } = vault;
+
+		if (!adapter.exists(from)) {
+			new Notice(`${from} path does not exist.`);
+			return;
+		}
+		if (!adapter.exists(to)) {
+			new Notice(`${to} path does not exist.`);
+			return;
+		}
+
+		let g = this.buildGraphFromLinks();
+
+		let paths = getAllPathsAsGraph(from, to, length, g);
+		new Notice("Done!");
+		if (from === to) {
+			new Notice(`${from} and ${to} are the same file!`);
+		}
+		else if (!paths) {
+			new Notice(`${from} has no path that lead to ${to}.`);
+		}
+		else {
+			this.openPathView(from, to, paths);
+		}
+	}
+
+	buildGraphFromLinks(): ExtendedGraph {
+		let g = new ExtendedGraph();
 		let { resolvedLinks } = app.metadataCache;
-		console.log(resolvedLinks);
 		for (let fromFilePath in resolvedLinks) {
 			for (let toFilePath in resolvedLinks[fromFilePath]) {
-				let u = filePathToID.get(fromFilePath);
-				let v = filePathToID.get(toFilePath);
-				if (u === undefined) {
-					n++;
-					filePathToID.set(fromFilePath, n);
-					IDToFilePath.set(n, fromFilePath);
-					u = n;
-				}
-				if (v === undefined) {
-					n++;
-					filePathToID.set(toFilePath, n);
-					IDToFilePath.set(n, toFilePath);
-					v = n;
-				}
-				console.log(u, v);
-				g.addEdge(u as number, v as number, 1);
-				g.addEdge(v as number, u as number, 1);
+				g.addEdgeExtended(fromFilePath, toFilePath, 1);
+				g.addEdgeExtended(toFilePath, fromFilePath, 1);
 			}
 		}
-		console.log(g);
-		return { g, filePathToID, IDToFilePath }
+		return g;
 	}
 
-	async activatePathView() {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+	async openPathGraphView(s: any, t: any, g: ExtendedGraph) {
+		let { workspace } = app;
+		workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 
-		await this.app.workspace.getRightLeaf(false).setViewState({
+		await workspace.getLeaf(true).setViewState({
+			type: VIEW_TYPE_PATHGRAPHVIEW,
+			active: true,
+		});
+
+		let pathGraphViewLeaf = workspace.getLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW)[0];
+		let pathGraphView = pathGraphViewLeaf.view;
+		if (!(pathGraphView instanceof PathGraphView)) {
+			new Notice("Failed to open Path View. Please try again.")
+			pathGraphViewLeaf.detach();
+			return;
+		}
+		pathGraphView.setData(s, t, g);
+
+		// this.app.workspace.revealLeaf(
+		// 	this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW)[0]
+		// );
+	}
+
+	async openPathView(from: any, to: any, g: ExtendedGraph) {
+		let s = g.getID(from), t = g.getID(to);
+		if (s === undefined) {
+			new Notice(`${from} does note exist!`);
+			return;
+		}
+		if (t === undefined) {
+			new Notice(`${to} does note exist!`);
+			return;
+		}
+		let { workspace } = app;
+		workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+
+		await workspace.getLeaf(true).setViewState({
 			type: VIEW_TYPE_PATHVIEW,
 			active: true,
 		});
+
+		let pathViewLeaf = workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0];
+		let pathView = pathViewLeaf.view;
+		if (!(pathView instanceof PathView)) {
+			new Notice("Failed to open Path View. Please try again.")
+			pathViewLeaf.detach();
+			return;
+		}
+		pathView.setData(s, t, g);
 
 		this.app.workspace.revealLeaf(
 			this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0]

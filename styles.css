@@ -1,4 +1,217 @@
-/* Sets all the text color to red! */
-body {
-    color: red;
+/* @settings
+
+name: Path Finder
+id: obsidina-path-finder
+settings:
+    - 
+        id: link
+        title: Link
+        type: heading
+        level: 3
+    - 
+        id: accent
+        title: Accent Color
+        type: variable-color
+        format: hsl-split
+        default: '#007AFF'
+    - 
+        id: text
+        title: UI font
+        description: Font used for the user interface
+        type: variable-text
+        default: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif
+
+*/
+.link {
+    fill: none;
+    stroke: white;
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
+}
+
+.link.selected {
+    stroke: purple;
+    stroke-opacity: 1;
+    stroke-width: 3px;
+}
+
+.link.unselected {
+    stroke-opacity: 0.3;
+    stroke-width: 1px;
+}
+
+.node {
+    cursor: grab;
+    /* fill: #000; */
+    stroke: white;
+    stroke-width: 1.5px;
+    stroke-opacity: 1;
+}
+
+.node.fixed {
+    stroke-width: 3px;
+    /* fill: red; */
+}
+
+.node.selected {
+    fill: purple;
+    stroke: white;
+}
+
+.node.center {
+    fill: purple;
+    stroke: white;
+}
+
+.node.unselected {
+    opacity: 0.5;
+}
+
+.node-circle {
+    r: 10px;
+}
+
+.node-circle.center {
+    r: 15px;
+    stroke-width: 3px;
+}
+
+.node-text {
+    fill: white;
+    stroke-width: 0.1px;
+    font-size: large;
+    opacity: 0.5;
+    x: 0;
+    y: -20;
+    text-anchor: middle;
+}
+
+.node-text.selected {
+    font-size: large;
+    opacity: 1;
+}
+
+.node-text.center {
+    font-size: x-large;
+    opacity: 1;
+}
+
+.node-text.unselected {
+    opacity: 0.1;
+}
+
+.path-finder.panel-container {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    padding: 6px 16px 8px 8px;
+    background-color: var(--background-primary-alt);
+    min-width: 140px;
+    max-width: 240px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    max-height: calc(100% - 16px);
+    overflow: auto;
+}
+
+.path-finder.panel-container.is-close {
+    background-color: var(--background-primary);
+    border: 1px solid transparent;
+    padding: 6px 8px 2px 8px;
+    min-width: inherit;
+}
+
+.path-finder.panel-button {
+    color: var(--text-faint);
+    cursor: var(--cursor);
+    background-color: var(--background-primary);
+    z-index: 1;
+}
+
+.path-finder.panel-button.mod-open {
+    width: 20px;
+    height: 20px;
+    display: none
+}
+
+.path-finder.panel-container.is-close .path-finder.panel-button.mod-open {
+    display: flex;
+}
+
+.path-finder.panel-button.mod-close {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    top: 5px;
+    right: 6px;
+}
+
+.path-finder.panel-button.mod-prev {
+    background-color: var(--background-primary);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    position: absolute;
+    top: 5px;
+    left: 6px;
+}
+
+.path-finder.panel-container.is-close .path-finder.panel-button.mod-prev {
+    display: none;
+}
+
+.path-finder.panel-button.mod-next {
+    background-color: var(--background-primary);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    position: absolute;
+    top: 5px;
+    right: 6px;
+}
+
+.path-finder.panel-container.is-close .path-finder.panel-button.mod-next {
+    display: none;
+}
+
+.path-finder.panel-display {
+    display: block;
+    overflow: auto;
+    padding: 6px 8px 2px 8px;
+}
+
+.path-finder.panel-display.path-item {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background-color: var(--background-primary-alt);
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.path-finder.panel-display.path-item.selected {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background-color: var(--background-primary);
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.path-finder.panel-container.is-close .path-finder.panel-display {
+    display: none;
+}
+
+.path-finder.panel-title {
+    position: sticky;
+    top: 30px;
+    margin-top: 30px;
+    margin-bottom: 5px;
+}
+
+.path-finder.panel-container.is-close .path-finder.panel-title {
+    display: none;
+}
+
+.path-finder.panel-title.title-text {
+    text-align: center;
+    margin: auto;
 }

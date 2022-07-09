@@ -46,6 +46,7 @@ settings:
     stroke: var(--text-normal);
     stroke-width: 1.5px;
     stroke-opacity: 1;
+    opacity: 0.8;
 }
 
 .node.fixed {
@@ -56,11 +57,13 @@ settings:
 .node.selected {
     fill: purple;
     stroke: var(--text-normal);
+    opacity: 1;
 }
 
 .node.center {
     fill: purple;
     stroke: var(--text-normal);
+    opacity: 1;
 }
 
 .node.unselected {

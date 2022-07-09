@@ -24,7 +24,7 @@ settings:
 */
 .link {
     fill: none;
-    stroke: white;
+    stroke: var(--text-normal);
     stroke-opacity: 0.6;
     stroke-width: 2px;
 }
@@ -43,7 +43,7 @@ settings:
 .node {
     cursor: grab;
     /* fill: #000; */
-    stroke: white;
+    stroke: var(--text-normal);
     stroke-width: 1.5px;
     stroke-opacity: 1;
 }
@@ -55,12 +55,12 @@ settings:
 
 .node.selected {
     fill: purple;
-    stroke: white;
+    stroke: var(--text-normal);
 }
 
 .node.center {
     fill: purple;
-    stroke: white;
+    stroke: var(--text-normal);
 }
 
 .node.unselected {
@@ -77,7 +77,7 @@ settings:
 }
 
 .node-text {
-    fill: white;
+    fill: var(--text-normal);
     stroke-width: 0.1px;
     font-size: large;
     opacity: 0.5;

@@ -88,15 +88,16 @@ export function ForceGraphWithLabels(container, nextPath,
         .classed("path-finder path-graph", true)
         .attr("width", width)
         .attr("height", height)
-        .attr("stroke", "white")
-        .attr("stroke-width", 10)
         .attr("viewBox", [0, 0, width, height])
         .style("font", "12px sans-serif");
 
-    svg.append("defs").selectAll("marker")
-        .data(linkGroups)
-        .join("marker")
-        .attr("id", d => `arrow-${d}`)
+    svg.append("defs")
+        // .selectAll("marker")
+        .append("marker")
+        // .data(linkGroups)
+        // .join("marker")
+        // .attr("id", d => `arrow-${d}`)
+        .attr("id", "arrow")
         .attr("viewBox", "0 -5 10 10")
         .attr("refX", 10)
         .attr("refY", -0.5)
@@ -104,7 +105,7 @@ export function ForceGraphWithLabels(container, nextPath,
         .attr("markerHeight", 6)
         .attr("orient", "auto")
         .append("path")
-        .attr("fill", linkStroke)
+        .attr("fill", "var(--text-normal)")
         .attr("d", "M0,-5L10,0L0,5");
 
     const link = svg.append("g")
@@ -117,7 +118,8 @@ export function ForceGraphWithLabels(container, nextPath,
         .data(links)
         .join("path")
         .classed("link", true)
-        .attr("marker-end", d => `url(${new URL(`#arrow-${d.type}`, location)})`);
+        // .attr("marker-end", d => `url(#arrow-${d.type})`);
+        .attr("marker-end", `url(#arrow)`);
 
     const node = svg.append("g")
         .attr("fill", nodeFill)

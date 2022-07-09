@@ -1,27 +1,14 @@
-import { normalizePath, Notice, Plugin, MarkdownView, TFile } from 'obsidian';
+import { normalizePath, Notice, Plugin } from 'obsidian';
 
-import { ExtendedGraph, Graph } from "src/algorithms/graph/types"
+import { ExtendedGraph } from "src/algorithms/graph/types"
 import { getShortestPath } from './algorithms/graph/getShortestPath';
 import { getAllPathsAsGraph } from './algorithms/graph/getAllPathsAsGraph';
 import { AllPathsAsGraphModal, AllPathsModal, ShortestPathModal } from './modals';
 import { PathGraphView, PathView, VIEW_TYPE_PATHGRAPHVIEW, VIEW_TYPE_PATHVIEW } from './view';
-import { getNextPath } from './algorithms/graph/getNextPath';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
 export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
-
 	async onload() {
 		console.log("Loading Path Finder plugin");
-		await this.loadSettings();
 
 		this.addCommand({
 			id: 'find-shortest-path',
@@ -214,13 +201,5 @@ export default class MyPlugin extends Plugin {
 		this.app.workspace.revealLeaf(
 			this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0]
 		);
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
 	}
 }

@@ -1,3 +1,5 @@
+// Credits go to phibr0's Obsidian Dictionary Plugin: https://github.com/phibr0/obsidian-dictionary
+
 import { TextInputSuggest } from "./suggest";
 import type { App } from "obsidian";
 

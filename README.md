@@ -46,3 +46,16 @@ Paths shown in the floating panel will be sorted from the shortest to the longes
 **Length:** The maximum length of all paths. Set 0 to show all paths regardless of length.
 
 Paths will be sorted from the shortest to the longest. Each path will be calculated on button clicked, so no need to worry about crushing.
+
+## Attribution
+
+- `genericTextSuggester.ts` and `suggest.ts` are taken from [phibr0/obsidian-dictionary](https://github.com/phibr0/obsidian-dictionary).
+- `d3ForceGraphWithLabels.js` and `d3ForceGraph.js` are taken and adapted from examples in d3Gallery with their links below:
+    - https://observablehq.com/@d3/force-directed-graph
+    - https://observablehq.com/@d3/force-directed-graph-canvas
+    - https://observablehq.com/@d3/mobile-patent-suits
+    - https://observablehq.com/@d3/sticky-force-layout
+    - https://observablehq.com/@d3/zoom
+    - These follows ISC License with the copyright message below: (adapted from https://observablehq.com/@d3/force-directed-graph and because the rest does not contain a copyright message, I assumed that they are under the same license)
+        - Copyright 2021 Observable, Inc.
+        - Released under the ISC license.

@@ -23,15 +23,15 @@ class Path {
     path: Array<number>;
 }
 
-export function* getNextPath(s: number, t: number, g: ExtendedGraph): Generator<Array<any> | undefined> {
+export async function* getNextPath(s: number, t: number, length: number, g: ExtendedGraph): AsyncGenerator<Array<any> | undefined> {
     let pathMap = new Map<string, boolean>();
 
-    if (s == t) return [s];
+    if (s == t) { yield [s]; return undefined; }
 
     let path = buildPath(s, t, dijkstra(s, g).from);
     if (path === undefined) { return undefined; }
 
-    let forbiddenEdges = new Map<number, Map<string, boolean>>;
+    let forbiddenEdges = new Map<number, Map<string, boolean>>();
     pathMap.set(path.toString(), true);
     yield (path.map(x => g.getName(x)));
 
@@ -39,14 +39,16 @@ export function* getNextPath(s: number, t: number, g: ExtendedGraph): Generator<
         if (a.path.length != b.path.length) return a.path.length - b.path.length;
         return a.id - b.id;
     });
-    while (path.length <= g.getN()) {
+    q.push(new Path(-1, path))
+    while (!q.isEmpty() && path.length <= g.getN()) {
+        let { path } = q.pop();
         let forbiddenNodes = new Map<number, boolean>();
         for (let i = 0; i < path.length - 1; i++) {
             if (forbiddenEdges.get(path[i]) === undefined) {
                 forbiddenEdges.set(path[i], new Map<string, boolean>());
             }
-            forbiddenEdges.get(path[i])?.set(`${path[i]},${path[i + 1]}`, true);
-            forbiddenEdges.get(path[i])?.set(`${path[i + 1]},${path[i]}`, true);
+            forbiddenEdges.get(path[i]).set(`${path[i]},${path[i + 1]}`, true);
+            forbiddenEdges.get(path[i]).set(`${path[i + 1]},${path[i]}`, true);
         }
         for (let i = 0; i < path.length - 1; i++) {
             let { from } = dijkstra(path[i], g, forbiddenNodes, forbiddenEdges.get(path[i]));
@@ -60,10 +62,10 @@ export function* getNextPath(s: number, t: number, g: ExtendedGraph): Generator<
         while (!q.isEmpty() && pathMap.has(q.peek().path.toString()))
             q.pop();
         if (q.isEmpty()) { return undefined; }
-        path = (q.peek() as Path).path;
-        q.pop();
-        console.log(path);
+        path = q.pop().path;
+        if (path.length > length) return undefined;
         pathMap.set(path.toString(), true);
+        // await new Promise(function (resolve, reject) { setTimeout(() => resolve("done"), 100) });
         yield path.map(x => g.getName(x));
     }
     return undefined;

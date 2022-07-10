@@ -21,6 +21,7 @@ export class ShortestPathModal extends Modal {
         contentEl.createEl("h1", { text: "Get Shortest Path" });
         let markdownFiles = app.vault.getMarkdownFiles();
         new Setting(contentEl)
+            .setDesc("The file to start from. Use full path from vault root.")
             .setName("From")
             .addText(textComponent => {
                 new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
@@ -30,6 +31,7 @@ export class ShortestPathModal extends Modal {
                     })
             })
         new Setting(contentEl)
+            .setDesc("The file to end with. Use full path from vault root.")
             .setName("To")
             .addText(textComponent => {
                 new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
@@ -41,7 +43,7 @@ export class ShortestPathModal extends Modal {
         new Setting(contentEl)
             .addButton((button) => {
                 button
-                    .setButtonText("Close")
+                    .setButtonText("Confirm")
                     .setCta()
                     .onClick(async (evt) => {
                         if (!(await legal(this.from))) {
@@ -75,12 +77,13 @@ export class AllPathsAsGraphModal extends Modal {
         this.callback = callback;
     }
 
-    onOpen() {
+    async onOpen() {
         const { contentEl } = this;
         const markdownFiles = app.vault.getMarkdownFiles();
         contentEl.createEl("h1", { text: "Get All Paths As Graph" });
         new Setting(contentEl)
             .setName("From")
+            .setDesc("The file to start from. Use full path from vault root.")
             .addText(textComponent => {
                 new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
                 textComponent
@@ -90,6 +93,7 @@ export class AllPathsAsGraphModal extends Modal {
             });
         new Setting(contentEl)
             .setName("To")
+            .setDesc("The file to end with. Use full path from vault root.")
             .addText(textComponent => {
                 new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
                 textComponent
@@ -99,6 +103,7 @@ export class AllPathsAsGraphModal extends Modal {
             });
         new Setting(contentEl)
             .setName("Length")
+            .setDesc("The maximum length of paths. Set 0 to show all paths regardless of length.")
             .addText(textComponent => {
                 textComponent
                     .setPlaceholder("10")
@@ -109,7 +114,7 @@ export class AllPathsAsGraphModal extends Modal {
         new Setting(contentEl)
             .addButton((button) => {
                 button
-                    .setButtonText("Close")
+                    .setButtonText("Confirm")
                     .setCta()
                     .onClick(async (evt) => {
                         if (!(await legal(this.from))) {
@@ -131,7 +136,7 @@ export class AllPathsAsGraphModal extends Modal {
             });
     }
 
-    onClose() {
+    async onClose() {
         const { contentEl } = this;
         contentEl.empty();
     }
@@ -154,6 +159,7 @@ export class AllPathsModal extends Modal {
         contentEl.createEl("h1", { text: "Get All Paths As Text" });
         new Setting(contentEl)
             .setName("From")
+            .setDesc("The file to start from. Use full path from vault root.")
             .addText(textComponent => {
                 new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
                 textComponent
@@ -163,6 +169,7 @@ export class AllPathsModal extends Modal {
             });
         new Setting(contentEl)
             .setName("To")
+            .setDesc("The file to end with. Use full path from vault root.")
             .addText(textComponent => {
                 new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
                 textComponent
@@ -172,6 +179,7 @@ export class AllPathsModal extends Modal {
             });
         new Setting(contentEl)
             .setName("Length")
+            .setDesc("The maximum length of paths. Set 0 to show all paths regardless of length.")
             .addText(textComponent => {
                 textComponent
                     .setPlaceholder("10")
@@ -182,7 +190,7 @@ export class AllPathsModal extends Modal {
         new Setting(contentEl)
             .addButton((button) => {
                 button
-                    .setButtonText("Close")
+                    .setButtonText("Confirm")
                     .setCta()
                     .onClick(async (evt) => {
                         if (!(await legal(this.from))) {

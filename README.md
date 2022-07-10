@@ -20,42 +20,43 @@
 
 ![Find Shortest Path](assets/find-shortest-path.gif)
 
-**From:** The file to start from.
+**From:** The file to start from. Use full path from vault root to the file.
 
-**To:** The file to end with.
+**To:** The file to end with. Use full path from vault root to the file.
 ### Find all paths between files as graph
 
 ![Find All Paths As Graph](assets/find-all-paths-as-graph.gif)
 
-**From:** The file to start from.
+**From:** The file to start from. Use full path from vault root to the file.
 
-**To:** The file to end with.
+**To:** The file to end with. Use full path from vault root to the file.
 
-**Length:** The maximum length of all paths. Set 0 to show all paths regardless of length. **Setting length to 0 may lead to Obsidian crushing due to mass amount of nodes rendering if your vault is too big, so use it WITH CARE.**
+**Length:** The maximum length of all paths. Often a path that is too long can be meaningless, so length limitation may be necessary. Set 0 to show all paths regardless of length. **Setting length to 0 may lead to Obsidian crushing due to mass amount of nodes rendering if your vault is too big, so use at your own risk.**
 
-Paths shown in the floating panel will be sorted from the shortest to the longest. Each path will be calculated on button clicked, so no need to worry about crushing.
+Paths shown in the floating panel will be sorted from the shortest to the longest. Each path will be calculated on button click, so no need to worry about crushing.
 
 ### Find all paths
 
 ![Find All Paths](assets/find-all-paths.gif)
 
-**From:** The file to start from.
+**From:** The file to start from. Use full path from vault root to the file.
 
-**To:** The file to end with.
+**To:** The file to end with. Use full path from vault root to the file.
 
 **Length:** The maximum length of all paths. Set 0 to show all paths regardless of length.
 
-Paths will be sorted from the shortest to the longest. Each path will be calculated on button clicked, so no need to worry about crushing.
+Paths will be sorted from the shortest to the longest. Each path will be calculated on button click, so no need to worry about crushing.
 
 ## Attribution
 
 - `genericTextSuggester.ts` and `suggest.ts` are taken from [phibr0/obsidian-dictionary](https://github.com/phibr0/obsidian-dictionary).
-- `d3ForceGraphWithLabels.js` and `d3ForceGraph.js` are taken and adapted from examples in d3Gallery with their links below:
+- `d3ForceGraphWithLabels.ts`is taken and adapted from examples in d3Gallery with their links below:
     - https://observablehq.com/@d3/force-directed-graph
     - https://observablehq.com/@d3/force-directed-graph-canvas
     - https://observablehq.com/@d3/mobile-patent-suits
     - https://observablehq.com/@d3/sticky-force-layout
     - https://observablehq.com/@d3/zoom
-    - These follows ISC License with the copyright message below: (adapted from https://observablehq.com/@d3/force-directed-graph and because the rest does not contain a copyright message, I assumed that they are under the same license)
+    - https://observablehq.com/@d3/temporal-force-directed-graph
+    - These examples above follow ISC License with the copyright message below: 
         - Copyright 2021 Observable, Inc.
         - Released under the ISC license.

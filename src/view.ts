@@ -1,10 +1,9 @@
 import * as d3 from "d3";
 import { ItemView, Notice, TFile, Vault, WorkspaceLeaf } from "obsidian";
 
-import type { ExtendedGraph } from 'src/algorithms/graph/types';
+import { ExtendedGraph } from 'src/algorithms/graph/types';
 import { getNextPath } from "./algorithms/graph/getNextPath.js";
-import { ForceGraphWithLabels } from './ui/d3ForceGraphWithLabels.js';
-import { createPanelContainer } from './ui/createPanelContainer';
+import { ForceGraphWithLabels } from './ui/d3ForceGraphWithLabels';
 
 export const VIEW_TYPE_PATHGRAPHVIEW = "path-graph-view";
 export const VIEW_TYPE_PATHVIEW = "path-view"
@@ -12,7 +11,6 @@ export const VIEW_TYPE_PATHVIEW = "path-view"
 export class PathGraphView extends ItemView {
     s: number;
     t: number;
-    g: ExtendedGraph;
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
     }
@@ -29,12 +27,12 @@ export class PathGraphView extends ItemView {
         this.refresh();
     }
 
-    getNodes(g: ExtendedGraph): any {
+    getNodes(g: ExtendedGraph): any[] {
         let ret = [];
         for (let i = 1; i <= g.getN(); i++) {
             ret.push({
                 id: g.getName(i),
-                type: i === this.s
+                group: i === this.s
                     ? "source"
                     : i === this.t
                         ? "target"
@@ -44,13 +42,14 @@ export class PathGraphView extends ItemView {
         return ret;
     }
 
-    getLinks(g: ExtendedGraph): any {
+    getLinks(g: ExtendedGraph): any[] {
         let ret = [];
         for (let i = 1; i <= g.getM(); i++) {
             let fromFilePath = g.getName(g.g[i].u), toFilePath = g.getName(g.g[i].v);
             if (!fromFilePath || !toFilePath) continue;
             let resolvedLinks = app.metadataCache.resolvedLinks;
             if (resolvedLinks[fromFilePath][toFilePath]) {
+                ;
                 let tmp = {
                     source: fromFilePath,
                     target: toFilePath,
@@ -65,32 +64,33 @@ export class PathGraphView extends ItemView {
         return ret;
     }
 
-    setData(from: any, to: any, g: ExtendedGraph) {
-        let s = g.getID(from);
-        let t = g.getID(to);
-        this.s = s; this.t = t; this.g = g;
+    setData(from: any, to: any, length: number, g: ExtendedGraph) {
         const container = this.containerEl.children[1];
         container.empty();
         // container.setAttribute("style", "padding: 0px; overflow: hidden; position: relative;");
 
         // createPanelContainer(container, getNextPath(s, t, g));
-        const nodes = this.getNodes(this.g);
-        const links = this.getLinks(this.g);
+        let newGraph = new ExtendedGraph();
+        newGraph.addVertice(from);
+        newGraph.addVertice(to);
+        let s = newGraph.getID(from);
+        let t = newGraph.getID(to);
+        this.s = s; this.t = t;
         ForceGraphWithLabels(
             container,
-            getNextPath(s, t, g),
+            getNextPath(g.getID(from), g.getID(to), length, g),
             {
-                nodes: nodes,
-                links: links
+                graph: newGraph,
+                getNodes: this.getNodes.bind(this),
+                getLinks: this.getLinks
             },
             {
                 nodeGroup: (x: any) => {
-                    return x.type;
+                    return x.group;
                 },
                 nodeGroups: ["source", "target", "node"],
                 colors: ["#227d51", "#cb1b45", "#0b1013"],
                 nodeRadius: 10,
-                // linkStrength: 0.5,
                 linkGroups: ["monodirectional", "bidirectional"],
                 nodeTitle: (x: any) => {
                     let file = app.vault.getAbstractFileByPath(x.id);
@@ -131,7 +131,7 @@ export class PathGraphView extends ItemView {
 export class PathView extends ItemView {
     s: number;
     t: number;
-    g: Generator<Array<any> | undefined>;
+    g: AsyncGenerator<Array<any> | undefined>;
     paths: Array<Array<any>>;
     currentPage: number;
     constructor(leaf: WorkspaceLeaf) {
@@ -146,10 +146,10 @@ export class PathView extends ItemView {
         return "Path view";
     }
 
-    setData(s: number, t: number, g: ExtendedGraph) {
-        this.s = s; this.t = t; this.g = getNextPath(s, t, g);
+    async setData(s: number, t: number, length: number, g: ExtendedGraph) {
+        this.s = s; this.t = t; this.g = getNextPath(s, t, length, g);
         this.currentPage = 0;
-        let x = this.g.next();
+        let x = await this.g.next();
         if (!x.value) {
             new Notice("No return from getNext!");
             return;
@@ -164,7 +164,12 @@ export class PathView extends ItemView {
         pathTitleContainer.createEl("h1", { text: `${this.currentPage + 1}/${this.paths.length}` });
         if (this.currentPage >= this.paths.length) return;
         for (let x of this.paths[this.currentPage]) {
-            pathContentContainer.createEl("p", { text: x })
+            let file = app.vault.getAbstractFileByPath(x);
+            if (file === undefined) continue;
+            let pathItemContainer = pathContentContainer.createDiv();
+            pathItemContainer.addClasses(["path-finder", "panel-display", "path-item"]);
+            pathItemContainer.createEl("h3", { text: file instanceof TFile ? file.basename : file.name });
+            pathItemContainer.createEl("p", { text: file.path });
         }
     }
 
@@ -226,12 +231,12 @@ export class PathView extends ItemView {
         rightButton.style.setProperty("vertical-align", "middle");
         rightButton.style.setProperty("width", "100%");
         rightButton.setText("Right");
-        rightButton.onClickEvent((evt) => {
+        rightButton.onClickEvent(async (evt) => {
             if (this.currentPage < this.paths.length - 1) {
                 this.currentPage++;
             }
             else {
-                let res = this.g.next();
+                let res = await this.g.next();
                 if (res.value) {
                     this.paths.push(res.value);
                     this.currentPage++;

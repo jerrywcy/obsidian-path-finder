@@ -34,14 +34,10 @@ export function createPanelContainer(containerEl: Element, g: Generator<Array<an
     closeButton.setAttribute("aria-label", "Close");
 
     panelContainer.addEventListener("mouseenter", function (this, evt) {
-        console.log("Mouse Enter!");
-        console.log(this);
         if (!this.hasClass("is-close"))
             closeButton.style.display = "flex";
     })
     panelContainer.addEventListener("mouseleave", function (this, evt) {
-        console.log("Mouse Leave!");
-        console.log(this);
         if (!this.hasClass("is-close"))
             closeButton.style.display = "none";
     })

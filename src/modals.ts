@@ -1,9 +1,25 @@
 import { App, Modal, Notice, Setting } from "obsidian";
 import { GenericTextSuggester } from "./genericTextSuggester";
+import { SuggestFile } from "src/genericTextSuggester";
 
 async function legal(path: string) {
     if (!path) return false;
     return await app.vault.adapter.exists(path);
+}
+
+function getFilesWithAliases(): SuggestFile[] {
+    let markdownFiles = app.vault.getMarkdownFiles();
+    let markdownFilesWithAlias: SuggestFile[] = [];
+    for (let file of markdownFiles) {
+        markdownFilesWithAlias.push(new SuggestFile(file.basename, file.path, true));
+        let aliases: string[] | undefined = app.metadataCache.getFileCache(file)?.frontmatter?.alias;
+        if (aliases !== undefined) {
+            for (let alias of aliases) {
+                markdownFilesWithAlias.push(new SuggestFile(alias, file.path, false));
+            }
+        }
+    }
+    return markdownFilesWithAlias
 }
 
 export class ShortestPathModal extends Modal {
@@ -19,12 +35,12 @@ export class ShortestPathModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         contentEl.createEl("h1", { text: "Get Shortest Path" });
-        let markdownFiles = app.vault.getMarkdownFiles();
+        const markdownFilesWithAlias = getFilesWithAliases();
         new Setting(contentEl)
             .setDesc("The file to start from. Use full path from vault root.")
             .setName("From")
             .addText(textComponent => {
-                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
+                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFilesWithAlias);
                 textComponent
                     .onChange((path) => {
                         this.from = path;
@@ -34,7 +50,7 @@ export class ShortestPathModal extends Modal {
             .setDesc("The file to end with. Use full path from vault root.")
             .setName("To")
             .addText(textComponent => {
-                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
+                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFilesWithAlias);
                 textComponent
                     .onChange((path) => {
                         this.to = path;
@@ -79,13 +95,13 @@ export class AllPathsAsGraphModal extends Modal {
 
     async onOpen() {
         const { contentEl } = this;
-        const markdownFiles = app.vault.getMarkdownFiles();
+        const markdownFilesWithAlias = getFilesWithAliases();
         contentEl.createEl("h1", { text: "Get All Paths As Graph" });
         new Setting(contentEl)
             .setName("From")
             .setDesc("The file to start from. Use full path from vault root.")
             .addText(textComponent => {
-                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
+                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFilesWithAlias);
                 textComponent
                     .onChange((path) => {
                         this.from = path;
@@ -95,7 +111,7 @@ export class AllPathsAsGraphModal extends Modal {
             .setName("To")
             .setDesc("The file to end with. Use full path from vault root.")
             .addText(textComponent => {
-                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
+                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFilesWithAlias);
                 textComponent
                     .onChange((path) => {
                         this.to = path;
@@ -155,13 +171,13 @@ export class AllPathsModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        const markdownFiles = app.vault.getMarkdownFiles();
+        const markdownFilesWithAlias = getFilesWithAliases();
         contentEl.createEl("h1", { text: "Get All Paths As Text" });
         new Setting(contentEl)
             .setName("From")
             .setDesc("The file to start from. Use full path from vault root.")
             .addText(textComponent => {
-                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
+                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFilesWithAlias);
                 textComponent
                     .onChange((path) => {
                         this.from = path;
@@ -171,7 +187,7 @@ export class AllPathsModal extends Modal {
             .setName("To")
             .setDesc("The file to end with. Use full path from vault root.")
             .addText(textComponent => {
-                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFiles.map(f => f.path));
+                new GenericTextSuggester(this.app, textComponent.inputEl, markdownFilesWithAlias);
                 textComponent
                     .onChange((path) => {
                         this.to = path;

@@ -218,3 +218,28 @@ settings:
     text-align: center;
     margin: auto;
 }
+
+.path-finder.alias-icon {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+}
+
+.path-finder.suggest-item {
+    position: relative;
+}
+
+.path-finder.suggest-item.item-name {
+    font-size: large;
+    font-weight: bold;
+    color: var(--h4-color);
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.path-finder.suggest-item.item-path {
+    font-size: small;
+    opacity: 0.8;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}

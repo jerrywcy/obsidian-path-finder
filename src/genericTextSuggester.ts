@@ -42,7 +42,7 @@ export class GenericTextSuggester extends TextInputSuggest<SuggestFile> {
                 if (aFileNamePos !== bFileNamePos)
                     return aFileNamePos - bFileNamePos;
                 else {
-                    return aFilePath.length - bFilePath.length;
+                    return aFileName.length - bFileName.length;
                 }
             }
             else if (aFileName.indexOf(inputLowerCase) === -1) {

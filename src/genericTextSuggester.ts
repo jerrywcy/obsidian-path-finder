@@ -33,8 +33,8 @@ export class GenericTextSuggester extends TextInputSuggest<SuggestFile> {
 
         if (!filtered) this.close();
         if (filtered?.length > 0) return filtered.sort((a, b) => {
-            if (a.origin && !b.origin) return -1;
-            if (!a.origin && b.origin) return 1;
+            // if (a.origin && !b.origin) return -1;
+            // if (!a.origin && b.origin) return 1;
             const aFileName = a.name.toLowerCase(), bFileName = b.name.toLowerCase();
             const aFilePath = a.path.toLowerCase(), bFilePath = b.path.toLowerCase();
             const aFileNamePos = aFileName.indexOf(inputLowerCase), bFileNamePos = bFileName.indexOf(inputLowerCase);

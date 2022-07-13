@@ -12,10 +12,11 @@ function getFilesWithAliases(): SuggestFile[] {
     let markdownFilesWithAlias: SuggestFile[] = [];
     for (let file of markdownFiles) {
         markdownFilesWithAlias.push(new SuggestFile(file.basename, file.path, true));
-        let aliases: string[] | undefined = app.metadataCache.getFileCache(file)?.frontmatter?.alias;
+        let aliases = app.metadataCache.getFileCache(file)?.frontmatter?.alias;
         if (aliases !== undefined) {
             for (let alias of aliases) {
-                markdownFilesWithAlias.push(new SuggestFile(alias, file.path, false));
+                if (typeof alias === "string")
+                    markdownFilesWithAlias.push(new SuggestFile(alias, file.path, false));
             }
         }
     }

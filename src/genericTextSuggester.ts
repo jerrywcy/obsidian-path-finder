@@ -24,9 +24,10 @@ export class GenericTextSuggester extends TextInputSuggest<SuggestFile> {
         const inputLowerCase: string = inputStr.toLowerCase();
 
         const filtered = this.items.filter(item => {
-            if (item.name.toLowerCase().contains(inputLowerCase))
+            if (!item.name.toLowerCase()) console.log(JSON.parse(JSON.stringify(item)));
+            if (item.name?.toLowerCase()?.contains(inputLowerCase))
                 return item;
-            if (item.path.toLowerCase().contains(inputLowerCase) && item.origin)
+            if (item.path?.toLowerCase()?.contains(inputLowerCase) && item?.origin)
                 return item;
         });
 

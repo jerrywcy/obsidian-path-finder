@@ -1,13 +1,11 @@
 import { normalizePath, Notice, Plugin } from 'obsidian';
 
 import { ExtendedGraph } from "src/algorithms/graph/types"
-import { getShortestPath } from './algorithms/graph/getShortestPath';
-import { getAllPathsAsGraph } from './algorithms/graph/getAllPathsAsGraph';
-import { AllPathsAsGraphModal, AllPathsModal, ShortestPathModal } from './modals';
+import { PathsModal } from './modals';
 import { PathGraphView, PathView, VIEW_TYPE_PATHGRAPHVIEW, VIEW_TYPE_PATHVIEW } from './view';
 import { dijkstra } from './algorithms/graph/dijkstra';
 
-export default class MyPlugin extends Plugin {
+export default class PathFinderPlugin extends Plugin {
 	async onload() {
 		console.log("Loading Path Finder plugin");
 
@@ -15,7 +13,7 @@ export default class MyPlugin extends Plugin {
 			id: 'find-shortest-path',
 			name: 'Find Shortest Path',
 			callback: () => {
-				new ShortestPathModal(this.app, this.findShortestPath.bind(this)).open();
+				new PathsModal(this.app, this.findPaths.bind(this, "shortest_path"), "shortest_path").open();
 			}
 		});
 
@@ -23,7 +21,7 @@ export default class MyPlugin extends Plugin {
 			id: 'find-all-paths-as-graph',
 			name: 'Find All Path As Graph',
 			callback: () => {
-				new AllPathsAsGraphModal(this.app, this.findAllPathsAsGraph.bind(this)).open();
+				new PathsModal(this.app, this.findPaths.bind(this, "all_paths_as_graph"), "all_paths_as_graph").open();
 			}
 		});
 
@@ -31,7 +29,7 @@ export default class MyPlugin extends Plugin {
 			id: 'find-all-paths',
 			name: 'Find All Path',
 			callback: () => {
-				new AllPathsModal(this.app, this.findAllPaths.bind(this)).open();
+				new PathsModal(this.app, this.findPaths.bind(this, "all_paths"), "all_paths").open();
 			}
 		});
 
@@ -51,7 +49,18 @@ export default class MyPlugin extends Plugin {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
 	}
 
-	findShortestPath(from: string, to: string): void {
+	/**
+	 * Find paths and show them in new view according to `operation`.
+	 * @param operation Pass "shortest_path" to find the shortest paths between `from` and `to` and show them as graph. 
+	 * 
+	 * Pass "all_paths_as_graph" to find all paths between `from` and `to` and show them as graph.
+	 * 
+	 * Pass "all_paths" to find all paths between `from` and `to` and show them as text. 
+	 * @param from The file to start from.
+	 * @param to The file to end with.
+	 * @param length The maximum length of all paths shown. Useless if `operation`==="shortest_path".
+	 */
+	findPaths(operation: "shortest_path" | "all_paths_as_graph" | "all_paths", from: string, to: string, length?: number) {
 		from = normalizePath(from);
 		to = normalizePath(to);
 		let { vault } = app;
@@ -66,118 +75,62 @@ export default class MyPlugin extends Plugin {
 			return;
 		}
 
-		let g = this.buildGraphFromLinks();
+		let graph = this.buildGraphFromLinks();
 
-		let s = g.getID(from);
-		let t = g.getID(to);
-		if (s === undefined) {
+		let source = graph.getID(from);
+		let target = graph.getID(to);
+		if (source === undefined) {
 			new Notice(`${from} does not exist!`);
 			return;
 		}
-		if (t === undefined) {
+		if (target === undefined) {
 			new Notice(`${to} does not exist!`);
 			return;
 		}
-		let { dis } = dijkstra(s, g);
-		if (dis[t] === Infinity) {
-			new Notice("From has no route that lead to To.");
-		}
-		else {
-			this.openPathGraphView(from, to, dis[t], g);
-		}
-	}
-
-	async findAllPathsAsGraph(from: string, to: string, length: number) {
-		from = normalizePath(from);
-		to = normalizePath(to);
-		let { vault, workspace } = app;
-		let { adapter } = vault;
-
-		if (!adapter.exists(from)) {
-			new Notice(`${from} path does not exist.`);
-			return;
-		}
-		if (!adapter.exists(to)) {
-			new Notice(`${to} path does not exist.`);
-			return;
-		}
-
-		let g = this.buildGraphFromLinks();
-
-		let s = g.getID(from);
-		let t = g.getID(to);
-		if (s === undefined) {
-			new Notice(`${from} does not exist!`);
-			return;
-		}
-		if (t === undefined) {
-			new Notice(`${to} does not exist!`);
-			return;
-		}
-		let { dis } = dijkstra(s, g);
+		let { dis } = dijkstra(source, graph);
 		if (from === to) {
 			new Notice(`${from} and ${to} are the same file!`);
+			return;
 		}
-		else if (dis[t] === Infinity) {
+		if (dis[target] === Infinity) {
 			new Notice(`${from} has no path that lead to ${to}.`);
+			return;
 		}
-		else {
-			this.openPathGraphView(from, to, length, g);
+		if (operation == "shortest_path") {
+			this.openPathGraphView(from, to, dis[target], graph);
+		}
+		else if (operation == "all_paths_as_graph") {
+			this.openPathGraphView(from, to, length, graph);
+		}
+		else if (operation == "all_paths") {
+			this.openPathView(from, to, length, graph);
 		}
 	}
 
-	findAllPaths(from: string, to: string, length: number, time: number) {
-		from = normalizePath(from);
-		to = normalizePath(to);
-		let { vault, workspace } = app;
-		let { adapter } = vault;
-
-		if (!adapter.exists(from)) {
-			new Notice(`${from} path does not exist.`);
-			return;
-		}
-		if (!adapter.exists(to)) {
-			new Notice(`${to} path does not exist.`);
-			return;
-		}
-
-		let g = this.buildGraphFromLinks();
-
-		let s = g.getID(from);
-		let t = g.getID(to);
-		if (s === undefined) {
-			new Notice(`${from} does not exist!`);
-			return;
-		}
-		if (t === undefined) {
-			new Notice(`${to} does not exist!`);
-			return;
-		}
-		let { dis } = dijkstra(s, g);
-		if (from === to) {
-			new Notice(`${from} and ${to} are the same file!`);
-		}
-		else if (dis[t] == Infinity) {
-			new Notice(`${from} has no path that lead to ${to}.`);
-		}
-		else {
-			this.openPathView(from, to, length, g);
-		}
-	}
-
+	/**
+	 * Get the graph formed by all notes in the vault.
+	 * @returns The graph formed by all notes in the vault.
+	 */
 	buildGraphFromLinks(): ExtendedGraph {
-		let g = new ExtendedGraph();
+		let graph = new ExtendedGraph();
 		let { resolvedLinks } = app.metadataCache;
 		for (let fromFilePath in resolvedLinks) {
 			for (let toFilePath in resolvedLinks[fromFilePath]) {
-				g.addEdgeExtended(fromFilePath, toFilePath, 1);
-				g.addEdgeExtended(toFilePath, fromFilePath, 1);
+				graph.addEdgeExtended(fromFilePath, toFilePath, 1);
+				graph.addEdgeExtended(toFilePath, fromFilePath, 1);
 			}
 		}
-		return g;
+		return graph;
 	}
 
-	async openPathGraphView(s: any, t: any, length: number, g: ExtendedGraph) {
+	/**
+	 * Show all paths no longer than `length` from `source` to `target` in a newly opened view as graph.
+	 * @param from The node to start from.
+	 * @param to The node to end with.
+	 * @param length The maximum length of all paths shown.
+	 * @param graph The graph.
+	 */
+	async openPathGraphView(from: any, to: any, length: number, graph: ExtendedGraph) {
 		let { workspace } = app;
 		workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 
@@ -193,20 +146,28 @@ export default class MyPlugin extends Plugin {
 			pathGraphViewLeaf.detach();
 			return;
 		}
-		pathGraphView.setData(s, t, length, g);
+		pathGraphView.setData(from, to, length, graph);
 
-		// this.app.workspace.revealLeaf(
-		// 	this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW)[0]
-		// );
+		this.app.workspace.revealLeaf(
+			this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW)[0]
+		);
 	}
 
-	async openPathView(from: any, to: any, length: number, g: ExtendedGraph) {
-		let s = g.getID(from), t = g.getID(to);
-		if (s === undefined) {
+
+	/**
+	 * Show all paths no longer than `length` from `source` to `target` in a newly opened view as text.
+	 * @param from The node to start from.
+	 * @param to The node to end with.
+	 * @param length The maximum length of all paths shown.
+	 * @param graph The graph.
+	 */
+	async openPathView(from: any, to: any, length: number, graph: ExtendedGraph) {
+		let source = graph.getID(from), target = graph.getID(to);
+		if (source === undefined) {
 			new Notice(`${from} does note exist!`);
 			return;
 		}
-		if (t === undefined) {
+		if (target === undefined) {
 			new Notice(`${to} does note exist!`);
 			return;
 		}
@@ -225,7 +186,7 @@ export default class MyPlugin extends Plugin {
 			pathViewLeaf.detach();
 			return;
 		}
-		pathView.setData(s, t, length, g);
+		pathView.setData(source, target, length, graph);
 
 		this.app.workspace.revealLeaf(
 			this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0]

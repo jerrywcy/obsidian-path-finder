@@ -243,3 +243,51 @@ settings:
     margin-top: 5px;
     margin-bottom: 5px;
 }
+
+.path-finder.left-button-container {
+    height: 100%;
+    width: 10%;
+    float: left;
+    display: flex;
+    justify-content: center;
+}
+
+.path-finder.left-button-container.left-button {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.path-finder.right-button-container {
+    height: 100%;
+    width: 10%;
+    float: left;
+    display: flex;
+    justify-content: center;
+}
+
+.path-finder.right-button-container.right-button {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.path-finder.path-container {
+    height: 100%;
+    width: 80%;
+    float: left;
+    justify-content: center;
+}
+
+.path-finder.path-container.title-container {
+    height: 10%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.path-finder.path-container.content-container {
+    height: 90%;
+    width: 100%;
+    overflow: scroll;
+}

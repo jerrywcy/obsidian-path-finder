@@ -1,16 +1,15 @@
-import * as d3 from "d3";
-import { ItemView, Notice, TFile, Vault, WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 
 import { ExtendedGraph } from 'src/algorithms/graph/types';
 import { getNextPath } from "./algorithms/graph/getNextPath.js";
-import { ForceGraphWithLabels } from './ui/d3ForceGraphWithLabels';
+import { d3ForceGraphLink, d3ForceGraphNode, ForceGraphWithLabels } from './ui/d3ForceGraphWithLabels';
 
 export const VIEW_TYPE_PATHGRAPHVIEW = "path-graph-view";
 export const VIEW_TYPE_PATHVIEW = "path-view"
 
 export class PathGraphView extends ItemView {
-    s: number;
-    t: number;
+    source: number;
+    target: number;
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
     }
@@ -24,17 +23,25 @@ export class PathGraphView extends ItemView {
     }
 
     onResize(): void {
-        this.refresh();
+        const container = this.containerEl.children[1];
+        const svg = container.getElementsByClassName("path-finder path-graph")[0];
+        svg.setAttribute("height", container.clientHeight.toString());
+        svg.setAttribute("width", container.clientWidth.toString());
     }
 
-    getNodes(g: ExtendedGraph): any[] {
-        let ret = [];
-        for (let i = 1; i <= g.getN(); i++) {
+    /**
+     * Get all nodes in a given graph.
+     * @param graph The graph.
+     * @returns An array of objects, each representing one node. {id: any, group: "source" | "target" | "node"}
+     */
+    getNodes(graph: ExtendedGraph): d3ForceGraphNode[] {
+        let ret: d3ForceGraphNode[] = [];
+        for (let i = 1; i <= graph.getN(); i++) {
             ret.push({
-                id: g.getName(i),
-                group: i === this.s
+                id: graph.getName(i),
+                group: i === this.source
                     ? "source"
-                    : i === this.t
+                    : i === this.target
                         ? "target"
                         : "node"
             });
@@ -42,10 +49,15 @@ export class PathGraphView extends ItemView {
         return ret;
     }
 
-    getLinks(g: ExtendedGraph): any[] {
-        let ret = [];
-        for (let i = 1; i <= g.getM(); i++) {
-            let fromFilePath = g.getName(g.g[i].u), toFilePath = g.getName(g.g[i].v);
+    /**
+     * Get all links in a given graph.
+     * @param graph The graph.
+     * @returns An array of objects, each representing one link. 
+     */
+    getLinks(graph: ExtendedGraph): d3ForceGraphLink[] {
+        let ret: d3ForceGraphLink[] = [];
+        for (let i = 1; i <= graph.getM(); i++) {
+            let fromFilePath = graph.getName(graph.edges[i].u), toFilePath = graph.getName(graph.edges[i].v);
             if (!fromFilePath || !toFilePath) continue;
             let resolvedLinks = app.metadataCache.resolvedLinks;
             if (resolvedLinks[fromFilePath][toFilePath]) {
@@ -64,21 +76,27 @@ export class PathGraphView extends ItemView {
         return ret;
     }
 
-    setData(from: any, to: any, length: number, g: ExtendedGraph) {
+
+    /**
+     * Set data for the view.
+     * @param from The file to start from.
+     * @param to The file to end with.
+     * @param length The maximum length of all paths shown.
+     * @param graph The graph.
+     */
+    setData(from: any, to: any, length: number, graph: ExtendedGraph) {
         const container = this.containerEl.children[1];
         container.empty();
-        // container.setAttribute("style", "padding: 0px; overflow: hidden; position: relative;");
 
-        // createPanelContainer(container, getNextPath(s, t, g));
         let newGraph = new ExtendedGraph();
         newGraph.addVertice(from);
         newGraph.addVertice(to);
-        let s = newGraph.getID(from);
-        let t = newGraph.getID(to);
-        this.s = s; this.t = t;
+        let source = newGraph.getID(from);
+        let target = newGraph.getID(to);
+        this.source = source; this.target = target;
         ForceGraphWithLabels(
             container,
-            getNextPath(g.getID(from), g.getID(to), length, g),
+            getNextPath(graph.getID(from), graph.getID(to), length, graph),
             {
                 graph: newGraph,
                 getNodes: this.getNodes.bind(this),
@@ -107,15 +125,6 @@ export class PathGraphView extends ItemView {
                     }
                 }
             });
-        // const graphContainer = container.createDiv();
-        // graphContainer.appendChild(graph);
-    }
-
-    refresh() {
-        const container = this.containerEl.children[1];
-        const svg = container.getElementsByClassName("path-finder path-graph")[0];
-        svg.setAttribute("height", container.clientHeight.toString());
-        svg.setAttribute("width", container.clientWidth.toString());
     }
 
     async onOpen() {
@@ -124,14 +133,13 @@ export class PathGraphView extends ItemView {
     }
 
     async onClose() {
-        // Nothing to clean up.
     }
 }
 
 export class PathView extends ItemView {
-    s: number;
-    t: number;
-    g: AsyncGenerator<Array<any> | undefined>;
+    source: number;
+    target: number;
+    nextPath: AsyncGenerator<Array<any> | undefined>;
     paths: Array<Array<any>>;
     currentPage: number;
     constructor(leaf: WorkspaceLeaf) {
@@ -146,10 +154,18 @@ export class PathView extends ItemView {
         return "Path view";
     }
 
-    async setData(s: number, t: number, length: number, g: ExtendedGraph) {
-        this.s = s; this.t = t; this.g = getNextPath(s, t, length, g);
+    /**
+     * Set data for current View.
+     * @param source The source node.
+     * @param target The target node.
+     * @param length The maximum length of all paths shown.
+     * @param graph The graph.
+     * @returns 
+     */
+    async setData(source: number, target: number, length: number, graph: ExtendedGraph) {
+        this.source = source; this.target = target; this.nextPath = getNextPath(source, target, length, graph);
         this.currentPage = 0;
-        let x = await this.g.next();
+        let x = await this.nextPath.next();
         if (!x.value) {
             new Notice("No return from getNext!");
             return;
@@ -158,6 +174,12 @@ export class PathView extends ItemView {
         this.refresh();
     }
 
+    /**
+     * Used to update content when {this.paths} or {this.currentPage} has changed.
+     * @param pathTitleContainer the container containing title
+     * @param pathContentContainer the container containing content
+     * @returns 
+     */
     update(pathTitleContainer: HTMLDivElement, pathContentContainer: HTMLDivElement) {
         pathTitleContainer.empty();
         pathContentContainer.empty();
@@ -173,52 +195,31 @@ export class PathView extends ItemView {
         }
     }
 
+    /**
+     * The function used to construct basic elements for the view.
+     */
     refresh() {
         this.currentPage = 0;
         const container = this.containerEl.children[1];
-        let c = d3.select(container);
         container.empty();
         container.setAttribute("style", "padding: 0px");
 
         const leftButtonContainer = container.createDiv();
         leftButtonContainer.addClasses(["path-finder", "left-button-container"]);
-        leftButtonContainer.style.setProperty("height", "100%");
-        leftButtonContainer.style.setProperty("width", "10%");
-        leftButtonContainer.style.setProperty("float", "left");
-        leftButtonContainer.style.setProperty("display", "flex");
-        leftButtonContainer.style.setProperty("justify-content", "center");
         const pathContainer = container.createDiv();
         pathContainer.addClasses(["path-finder", "path-container"]);
-        pathContainer.style.setProperty("height", "100%");
-        pathContainer.style.setProperty("width", "80%");
-        pathContainer.style.setProperty("float", "left");
-        leftButtonContainer.style.setProperty("justify-content", "center");
         const pathTitleContainer = pathContainer.createDiv();
         pathTitleContainer.addClasses(["path-finder", "path-container", "title-container"]);
-        pathTitleContainer.style.setProperty("height", "10%");
-        pathTitleContainer.style.setProperty("width", "100%");
-        pathTitleContainer.style.setProperty("display", "flex");
-        pathTitleContainer.style.setProperty("justify-content", "center");
         const pathContentContainer = pathContainer.createDiv();
         pathContentContainer.addClasses(["path-finder", "path-container", "content-container"]);
-        pathContentContainer.style.setProperty("height", "90%");
-        pathContentContainer.style.setProperty("width", "100%");
-        pathContentContainer.style.setProperty("overflow", "scroll");
-
         const rightButtonContainer = container.createDiv();
         rightButtonContainer.addClasses(["path-finder", "right-button-container"])
-        rightButtonContainer.style.setProperty("height", "100%");
-        rightButtonContainer.style.setProperty("width", "10%");
-        rightButtonContainer.style.setProperty("float", "left");
-        rightButtonContainer.style.setProperty("display", "flex");
-        rightButtonContainer.style.setProperty("justify-content", "center");
+
         this.update(pathTitleContainer, pathContentContainer);
 
         const leftButton = leftButtonContainer.createEl("button");
-        leftButton.style.setProperty("text-align", "center");
-        leftButton.style.setProperty("vertical-align", "middle");
-        leftButton.style.setProperty("width", "100%");
-        leftButton.setText("Left");
+        leftButton.addClasses(["path-finder", "left-button-container", "left-button"]);
+        setIcon(leftButton, "left-arrow");
         leftButton.onClickEvent((evt) => {
             if (this.currentPage > 0) {
                 this.currentPage--;
@@ -227,16 +228,14 @@ export class PathView extends ItemView {
         })
 
         const rightButton = rightButtonContainer.createEl("button");
-        rightButton.style.setProperty("text-align", "center");
-        rightButton.style.setProperty("vertical-align", "middle");
-        rightButton.style.setProperty("width", "100%");
-        rightButton.setText("Right");
+        rightButton.addClasses(["path-finder", "right-button-container", "right-button"]);
+        setIcon(rightButton, "right-arrow");
         rightButton.onClickEvent(async (evt) => {
             if (this.currentPage < this.paths.length - 1) {
                 this.currentPage++;
             }
             else {
-                let res = await this.g.next();
+                let res = await this.nextPath.next();
                 if (res.value) {
                     this.paths.push(res.value);
                     this.currentPage++;
@@ -252,10 +251,8 @@ export class PathView extends ItemView {
     async onOpen() {
         const container = this.containerEl.children[1];
         container.empty();
-        // this.refresh();
     }
 
     async onClose() {
-        // Nothing to clean up.
     }
 }

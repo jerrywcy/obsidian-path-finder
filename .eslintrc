@@ -16,6 +16,10 @@
     "sourceType": "module"
   },
   "rules": {
+    "prefer-const": "off",
+    "no-inferrable-types": "off",
+    "ignoreParameters": true,
+    "ignoreProperties": true,
     "no-unused-vars": "off",
     "@typescript-eslint/ban-ts-comment": "off",
     "no-prototype-builtins": "off",

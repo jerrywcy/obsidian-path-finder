@@ -9,13 +9,18 @@ function getFilesWithAliases(): SuggestFile[] {
         markdownFilesWithAlias.push(new SuggestFile(file.basename, file.path, true));
         let aliases = app.metadataCache.getFileCache(file)?.frontmatter?.alias;
         if (aliases !== undefined) {
-            for (let alias of aliases) {
-                if (typeof alias === "string")
-                    markdownFilesWithAlias.push(new SuggestFile(alias, file.path, false));
+            try{
+                for (let alias of aliases) {
+                    if (typeof alias === "string")
+                        markdownFilesWithAlias.push(new SuggestFile(alias, file.path, false));
+                }
+            }
+            catch(error){
+                console.log(`Path Finder Plugin: Wrong alias format in file ${file.path}. Please consider change it.`);
             }
         }
     }
-    return markdownFilesWithAlias
+    return markdownFilesWithAlias;
 }
 
 export class PathsModal extends Modal {

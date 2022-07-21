@@ -1,36 +1,53 @@
-import { normalizePath, Notice, Plugin } from 'obsidian';
+import { normalizePath, Notice, Plugin } from "obsidian";
 
-import { ExtendedGraph } from "src/algorithms/graph/types"
-import { PathsModal } from './modals';
-import { PathGraphView, PathView, VIEW_TYPE_PATHGRAPHVIEW, VIEW_TYPE_PATHVIEW } from './view';
-import { dijkstra } from './algorithms/graph/dijkstra';
+import { ExtendedGraph } from "src/algorithms/graph/types";
+import { PathsModal } from "./modals";
+import {
+	PathGraphView,
+	PathView,
+	VIEW_TYPE_PATHGRAPHVIEW,
+	VIEW_TYPE_PATHVIEW,
+} from "./view";
+import { dijkstra } from "./algorithms/graph/dijkstra";
 
 export default class PathFinderPlugin extends Plugin {
 	async onload() {
 		console.log("Loading Path Finder plugin");
 
 		this.addCommand({
-			id: 'find-shortest-path',
-			name: 'Find Shortest Path',
+			id: "find-shortest-path",
+			name: "Find Shortest Path",
 			callback: () => {
-				new PathsModal(this.app, this.findPaths.bind(this, "shortest_path"), "shortest_path").open();
-			}
+				new PathsModal(
+					this.app,
+					this.findPaths.bind(this, "shortest_path"),
+					"shortest_path"
+				).open();
+			},
 		});
 
 		this.addCommand({
-			id: 'find-all-paths-as-graph',
-			name: 'Find All Path As Graph',
+			id: "find-all-paths-as-graph",
+			name: "Find All Path As Graph",
 			callback: () => {
-				new PathsModal(this.app, this.findPaths.bind(this, "all_paths_as_graph"), "all_paths_as_graph").open();
-			}
+				new PathsModal(
+					this.app,
+					this.findPaths.bind(this, "all_paths_as_graph"),
+					"all_paths_as_graph"
+				).open();
+			},
 		});
 
 		this.addCommand({
-			id: 'find-all-paths',
-			name: 'Find All Path',
+			id: "find-all-paths",
+			name: "Find All Path",
 			callback: () => {
-				new PathsModal(this.app, this.findPaths.bind(this, "all_paths"), "all_paths").open();
-			}
+				new PathsModal(
+					this.app,
+					this.findPaths.bind(this, "all_paths"),
+					"all_paths"
+				).open();
+			},
 		});
 
 		this.registerView(
@@ -38,10 +55,7 @@ export default class PathFinderPlugin extends Plugin {
 			(leaf) => new PathGraphView(leaf)
 		);
 
-		this.registerView(
-			VIEW_TYPE_PATHVIEW,
-			(leaf) => new PathView(leaf)
-		);
+		this.registerView(VIEW_TYPE_PATHVIEW, (leaf) => new PathView(leaf));
 	}
 
 	onunload() {
@@ -51,27 +65,32 @@ export default class PathFinderPlugin extends Plugin {
 
 	/**
 	 * Find paths and show them in new view according to `operation`.
-	 * @param operation Pass "shortest_path" to find the shortest paths between `from` and `to` and show them as graph. 
-	 * 
+	 * @param operation Pass "shortest_path" to find the shortest paths between `from` and `to` and show them as graph.
+	 *
 	 * Pass "all_paths_as_graph" to find all paths between `from` and `to` and show them as graph.
-	 * 
-	 * Pass "all_paths" to find all paths between `from` and `to` and show them as text. 
+	 *
+	 * Pass "all_paths" to find all paths between `from` and `to` and show them as text.
 	 * @param from The file to start from.
 	 * @param to The file to end with.
 	 * @param length The maximum length of all paths shown. Useless if `operation`==="shortest_path".
 	 */
-	findPaths(operation: "shortest_path" | "all_paths_as_graph" | "all_paths", from: string, to: string, length?: number) {
+	findPaths(
+		operation: "shortest_path" | "all_paths_as_graph" | "all_paths",
+		from: string,
+		to: string,
+		length?: number
+	) {
 		from = normalizePath(from);
 		to = normalizePath(to);
 		let { vault } = app;
 		let { adapter } = vault;
 
-		if (!adapter.exists(from)) {
-			new Notice(`${from} path does not exist.`);
+		if (vault.getAbstractFileByPath(from) === null) {
+			new Notice(`${from} does not exist.`);
 			return;
 		}
-		if (!adapter.exists(to)) {
-			new Notice(`${to} path does not exist.`);
+		if (vault.getAbstractFileByPath(to) === null) {
+			new Notice(`${to} does not exist.`);
 			return;
 		}
 
@@ -98,11 +117,9 @@ export default class PathFinderPlugin extends Plugin {
 		}
 		if (operation == "shortest_path") {
 			this.openPathGraphView(from, to, dis[target], graph);
-		}
-		else if (operation == "all_paths_as_graph") {
+		} else if (operation == "all_paths_as_graph") {
 			this.openPathGraphView(from, to, length, graph);
-		}
-		else if (operation == "all_paths") {
+		} else if (operation == "all_paths") {
 			this.openPathView(from, to, length, graph);
 		}
 	}
@@ -130,19 +147,25 @@ export default class PathFinderPlugin extends Plugin {
 	 * @param length The maximum length of all paths shown.
 	 * @param graph The graph.
 	 */
-	async openPathGraphView(from: any, to: any, length: number, graph: ExtendedGraph) {
+	async openPathGraphView(
+		from: any,
+		to: any,
+		length: number,
+		graph: ExtendedGraph
+	) {
 		let { workspace } = app;
 		workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 
-		await workspace.getLeaf(true).setViewState({
+		let pathGraphViewLeaf = workspace.getLeaf(true);
+
+		await pathGraphViewLeaf.setViewState({
 			type: VIEW_TYPE_PATHGRAPHVIEW,
 			active: true,
 		});
 
-		let pathGraphViewLeaf = workspace.getLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW)[0];
 		let pathGraphView = pathGraphViewLeaf.view;
 		if (!(pathGraphView instanceof PathGraphView)) {
-			new Notice("Failed to open Path View. Please try again.")
+			new Notice("Failed to open Path View. Please try again.");
 			pathGraphViewLeaf.detach();
 			return;
 		}
@@ -153,7 +176,6 @@ export default class PathFinderPlugin extends Plugin {
 		);
 	}
 
-
 	/**
 	 * Show all paths no longer than `length` from `source` to `target` in a newly opened view as text.
 	 * @param from The node to start from.
@@ -161,8 +183,14 @@ export default class PathFinderPlugin extends Plugin {
 	 * @param length The maximum length of all paths shown.
 	 * @param graph The graph.
 	 */
-	async openPathView(from: any, to: any, length: number, graph: ExtendedGraph) {
-		let source = graph.getID(from), target = graph.getID(to);
+	async openPathView(
+		from: any,
+		to: any,
+		length: number,
+		graph: ExtendedGraph
+	) {
+		let source = graph.getID(from),
+			target = graph.getID(to);
 		if (source === undefined) {
 			new Notice(`${from} does note exist!`);
 			return;
@@ -182,7 +210,7 @@ export default class PathFinderPlugin extends Plugin {
 		let pathViewLeaf = workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0];
 		let pathView = pathViewLeaf.view;
 		if (!(pathView instanceof PathView)) {
-			new Notice("Failed to open Path View. Please try again.")
+			new Notice("Failed to open Path View. Please try again.");
 			pathViewLeaf.detach();
 			return;
 		}

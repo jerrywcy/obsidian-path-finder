@@ -1,7 +1,7 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 
 import { ExtendedGraph } from "src/algorithms/graph/types";
-import { getNextPath } from "./algorithms/graph/GetNextPath.js";
+import { getNextPath } from "./algorithms/graph/GetNextPath";
 import {
 	d3ForceGraphLink,
 	d3ForceGraphNode,

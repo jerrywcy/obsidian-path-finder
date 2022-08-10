@@ -2,13 +2,22 @@
 
 ## Install
 
-### BRAT
+### From Obsidian 
+
+1. Open `Settings` > `Third-party plugin`
+2. Make sure Safe mode is off
+3. Click `Browse community plugins`
+4. Search for this plugin
+5. Click `Install`
+6. Once installed, close the community plugins window and the plugin is ready to use.
+
+### From BRAT
 
 1. Install [Obsidian42-BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
 2. Click `Add new beta plugin` and fill in `jerrywcy/obsidian-path-finder`.
 3. Activate plugin.
 
-### Manually
+### From Github Release
 
 1. Download `obsidian-path-finder.zip` from [Releases](https://github.com/jerrywcy/obsidian-path-finder/releases).
 2. Decompress the `.zip` file and put the folder `obsidian-path-finder` under `path-to-your-vault/.obsidian/plugins/`.

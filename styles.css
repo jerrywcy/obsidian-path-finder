@@ -3,104 +3,549 @@
 name: Path Finder
 id: obsidina-path-finder
 settings:
+# Link
     - 
-        id: link
+        id: path-finder-link
         title: Link
+        title.zh: 边
+        type: heading
+        level: 2
+
+    # Link Stroke
+    -
+        id: path-finder-link-stroke
+        title: Link Stroke
+        title.zh: 边颜色
+        type: variable-themed-color
+        format: hex
+        default-light: '#000000'
+        default-dark: '#FFFFFF'
+
+    # Link Stroke Opacity
+    - 
+        id: path-finder-link-stroke-opacity
+        title: Link Stroke Opacity
+        title.zh: 边透明度
+        type: variable-number-slider
+        default: 0.6
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Link Stroke Width
+    - 
+        id: path-finder-link-stroke-width
+        title: Link Stroke Width
+        title.zh: 边宽度
+        type: variable-number
+        format: px
+        default: 2
+# Selected Link
+    -
+        id: path-finder-link-selected
+        title: Selected Link
+        title.zh: 被选中边
         type: heading
         level: 3
-    - 
-        id: accent
-        title: Accent Color
+
+    # Selected Link Stroke
+    -
+        id: path-finder-link-selected-stroke
+        title: Selected Link Stroke
+        title.zh: 被选中边颜色
         type: variable-color
-        format: hsl-split
-        default: '#007AFF'
-    - 
-        id: text
-        title: UI font
-        description: Font used for the user interface
+        format: hex
+        default: '#800080'
+
+    # Selected Link Stroke Opacity
+    -
+        id: path-finder-link-selected-stroke-opacity
+        title: Selected Link Stroke Opacity
+        title.zh: 被选中边透明度
+        type: variable-number-slider
+        default: 1
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Selected Link Stroke Width
+    -
+        id: path-finder-link-selected-stroke-width
+        title: Selected Link Stroke Width
+        title.zh: 被选中边宽度
+        type: variable-number
+        default: 3
+        format: px
+
+# Unselected Link
+    -
+        id: path-finder-link-unselected
+        title: Unselected Link
+        title.zh: 未被选中边
+        type: heading
+        level: 3
+
+    # Unselected Link Stroke Opacity
+    -
+        id: path-finder-link-unselected-stroke-opacity
+        title: Unselected Link Stroke Opacity
+        title.zh: 未被选中边透明度
+        type: variable-number-slider
+        default: 0.3
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Unselected Link Stroke Width
+    -
+        id: path-finder-link-unselected-stroke-width
+        title: Unselected Link Stroke Width
+        title.zh: 未被选中边宽度
+        type: variable-number
+        default: 1
+        format: px
+
+# Node
+    -
+        id: path-finder-node
+        title: Node
+        title.zh: 节点
+        type: heading
+        level: 2
+
+    # When cursor on node
+    -
+        id: path-finder-node-cursor
+        title: When cursor on node
+        title.zh: 鼠标在节点上时
         type: variable-text
-        default: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif
+        default: grab
+        description: See https://developer.mozilla.org/en-US/docs/web/css/cursor#try_it for detail.
+        description.zh: 参见https://developer.mozilla.org/zh-CN/docs/web/css/cursor#尝试一下
 
+    # Node radius
+    -
+        id: path-finder-node-radius
+        title: Node Radius
+        title.zh: 节点半径
+        type: variable-number
+        default: 10
+        format: px
+    # Node Opacity
+    -
+        id: path-finder-node-opacity
+        title: Node Opacity
+        title.zh: 节点透明度
+        type: variable-number-slider
+        default: 0.8
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Node Stroke
+    -
+        id: path-finder-node-stroke
+        title: Node Stroke
+        title.zh: 节点边框颜色
+        type: variable-themed-color
+        format: hex
+        default-light: '#000000'
+        default-dark: '#FFFFFF'
+
+
+    # Node Stroke Width
+    -
+        id: path-finder-node-stroke-width
+        title: Node Stroke Width
+        title.zh: 节点边框宽度
+        type: variable-number
+        default: 1.5
+        format: px
+
+    # Node Stroke Opacity
+    -
+        id: path-finder-node-stroke-opacity
+        title: Node Stroke Opacity
+        title.zh: 节点边框透明度
+        type: variable-number-slider
+        default: 1
+        min: 0
+        max: 1
+        step: 0.05
+
+    ## Node Text Fill
+    #-
+    #    id: path-finder-node-text-fill
+    #    title: Node Text Fill
+    #    title.zh: 节点文字填充
+    #    type: variable-themed-color
+    #    default-light: '#000000'
+    #    default-dark: '#FFFFFF'
+    
+    # Node Text Stroke Width
+    -
+        id: path-finder-node-text-stroke-width
+        title: Node Text Stroke Width
+        title.zh: 节点文字边框宽度
+        type: variable-number
+        default: 0.1
+        format: px
+    
+    # Node Text Font Size
+    -
+        id: path-finder-node-text-font-size
+        title: Node Text Font Size
+        title.zh: 节点文字字体大小
+        type: variable-text
+        default: large
+    
+    # Node Text Opacity
+    -
+        id: path-finder-node-text-opacity
+        title: Node Text Opacity
+        title.zh: 节点文字透明度
+        type: variable-number-slider
+        default: 0.5
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Node Text Anchor
+    -
+        id: path-finder-node-text-anchor
+        title: Node Text anchor
+        title.zh: 节点文字对齐模式
+        type: variable-select
+        default: middle
+        options:
+            -
+                label: Start
+                label.zh: 左对齐
+                value: start
+            -
+                label: Middle
+                label.zh: 居中
+                value: middle
+            -
+                label: End
+                label.zh: 右对齐
+                value: end
+
+# Fixed Node
+    -
+        id: path-finder-node-fixed
+        title: Fixed Node
+        title.zh: 固定节点
+        type: heading
+        level: 3
+
+    # Fixed Node Radius
+    -
+        id: path-finder-node-fixed-radius
+        title: Fixed Node Radius
+        title.zh: 固定节点半径
+        type: variable-number
+        default: 10
+        format: px
+
+    # Fixed Node Stroke Width
+    -
+        id: path-finder-node-fixed-stroke-width
+        title: Fixed Node Stroke Width
+        title.zh: 固定节点边框宽度
+        type: variable-number
+        default: 3
+        format: px
+
+# Selected Node
+    -
+        id: path-finder-node-selected
+        title: Selected Node
+        title.zh: 已选中节点
+        type: heading
+        level: 3
+
+    # Selected Node radius
+    -
+        id: path-finder-node-selected-radius
+        title: Selected Node Radius
+        title.zh: 已选中节点半径
+        type: variable-number
+        default: 10
+        format: px
+
+    # Selected Node Fill
+    -
+        id: path-finder-node-selected-fill
+        title: Selected Node Fill
+        title.zh: 已选中节点填充
+        type: variable-color
+        format: hex
+        default: '#800080'
+
+    # Selected Node Stroke
+    -
+        id: path-finder-node-selected-stroke
+        title: Selected Node Stroke
+        title.zh: 已选中节点边框
+        type: variable-themed-color
+        format: hex
+        default-light: '#000000'
+        default-dark: '#FFFFFF'
+
+    # Selected Node Opacity
+    -
+        id: path-finder-node-selected-opacity
+        title: Selected Node Opacity
+        title.zh: 已选中节点透明度
+        type: variable-number-slider
+        default: 1
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Selected Node Text Font Size
+    -
+        id: path-finder-node-selected-text-font-size
+        title: Selected Node Text Font Size
+        title.zh: 已选中节点文字字体大小
+        type: variable-text
+        default: large
+    
+    # Selected Node Text Opacity
+    -
+        id: path-finder-node-selected-text-opacity
+        title: Selected Node Text Opacity
+        title.zh: 已选中节点文字透明度
+        type: variable-number-slider
+        default: 1
+        min: 0
+        max: 1
+        step: 0.05
+
+# Center Node
+    -
+        id: path-finder-node-center
+        title: Center Node
+        title.zh: 中心节点
+        type: heading
+        level: 3
+
+    # Center Node radius
+    -
+        id: path-finder-node-center-radius
+        title: Center Node Radius
+        title.zh: 中心节点半径
+        type: variable-number
+        default: 15
+        format: px
+
+    # Center Node Fill
+    -
+        id: path-finder-node-center-fill
+        title: Center Node Fill
+        title.zh: 中心节点填充颜色
+        type: variable-color
+        format: hex
+        default: '#800080'
+
+    # Center Node Stroke
+    -
+        id: path-finder-node-center-stroke
+        title: Center Node Stroke
+        title.zh: 中心节点边框颜色
+        type: variable-themed-color
+        format: hex
+        default-light: '#000000'
+        default-dark: '#FFFFFF'
+    
+    # Center Node Stroke Width
+    -
+        id: path-finder-node-center-stroke-width
+        title: Center Node Stroke Width
+        title.zh: 中心节点边框宽度
+        type: variable-number
+        default: 3
+        format: px
+
+    # Center Node Opacity
+    -
+        id: path-finder-node-center-opacity
+        title: Center Node Opacity
+        title.zh: 中心节点透明度
+        type: variable-number-slider
+        default: 1
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Center Node Text Font Size
+    -
+        id: path-finder-node-center-text-font-size
+        title: Center Node Text Font Size
+        title.zh: 中心节点文字字体大小
+        type: variable-text
+        default: x-large
+    
+    # Center Node Text Opacity
+    -
+        id: path-finder-node-center-text-opacity
+        title: Center Node Text Opacity
+        title.zh: 中心节点文字透明度
+        type: variable-number-slider
+        default: 1
+        min: 0
+        max: 1
+        step: 0.05
+
+# Unselected Node
+    -
+        id: path-finder-node-unselected
+        title: Unselected Node
+        title.zh: 未选中节点
+        type: heading
+        level: 3
+
+    # Unselected Node radius
+    -
+        id: path-finder-node-unselected-radius
+        title: Unselected Node Radius
+        title.zh: 未选中节点半径
+        type: variable-number
+        default: 10
+        format: px
+
+    # Unselected node Opacity
+    -
+        id: path-finder-node-unselected-opacity
+        title: Unselected Node Opacity
+        title.zh: 未选中节点透明度
+        type: variable-number-slider
+        default: 0.5
+        min: 0
+        max: 1
+        step: 0.05
+
+    # Unselected Node Fill
+    -
+        id: path-finder-node-unselected-fill
+        title: Unselected Node Fill
+        title.zh: 未选中节点填充颜色
+        type: variable-themed-color
+        format: hex
+        default-light: '#000000'
+        default-dark: '#FFFFFF'
+
+    # Unselected Node Stroke
+    -
+        id: path-finder-node-unselected-stroke
+        title: Unselected Node Stroke
+        title.zh: 未选中节点边框颜色
+        type: variable-themed-color
+        format: hex
+        default-light: '#000000'
+        default-dark: '#FFFFFF'
+    
+    # Unselected Node Text Opacity
+    -
+        id: path-finder-node-unselected-text-opacity
+        title: Unselected Node Text Opacity
+        title.zh: 未选中节点文字透明度
+        type: variable-number-slider
+        default: 0.1
+        min: 0
+        max: 1
+        step: 0.05
 */
-.link {
+.path-finder.link {
     fill: none;
-    stroke: var(--text-normal);
-    stroke-opacity: 0.6;
-    stroke-width: 2px;
+    stroke: var(--path-finder-link-stroke, var(--text-normal));
+    stroke-opacity: var(--path-finder-link-stroke-opacity, 0.6);
+    stroke-width: var(--path-finder-link-stroke-width, 2px);
 }
 
-.link.selected {
-    stroke: purple;
-    stroke-opacity: 1;
-    stroke-width: 3px;
+.path-finder.link.selected {
+    stroke: var(--path-finder-link-selected-stroke, purple);
+    stroke-opacity: var(--path-finder-link-selected-stroke-opacity, 1);
+    stroke-width: var(--path-finder-link-selected-stroke-width, 3px);
 }
 
-.link.unselected {
-    stroke-opacity: 0.3;
-    stroke-width: 1px;
+.path-finder.link.unselected {
+    stroke-opacity: var(--path-finder-link-unselected-stroke-opacity, 0.3);
+    stroke-width: var(path-finder-link-unselected-stroke-width, 1px);
 }
 
-.node {
+.path-finder.node {
     cursor: grab;
     /* fill: #000; */
-    stroke: var(--text-normal);
-    stroke-width: 1.5px;
-    stroke-opacity: 1;
-    opacity: 0.8;
+    stroke: var(--path-finder-node-stroke, var(--text-normal));
+    stroke-width: var(--path-finder-node-stroke-width, 1.5px);
+    stroke-opacity: var(--path-finder-node-stroke-opacity, 1);
+    opacity: var(--path-finder-node-opacity, 0.8);
 }
 
-.node.fixed {
-    stroke-width: 3px;
+.path-finder.node.fixed {
+    stroke-width: var(--path-finder-node-fixed-stroke-width, 3px);
     /* fill: red; */
 }
 
-.node.selected {
-    fill: purple;
-    stroke: var(--text-normal);
-    opacity: 1;
+.path-finder.node.selected {
+    fill: var(--path-finder-node-selected-fill, purple);
+    stroke: var(--path-finder-node-selected-stroke, var(--text-normal));
+    opacity: var(--path-finder-node-selected-opacity, 1);
 }
 
-.node.center {
-    fill: purple;
-    stroke: var(--text-normal);
-    opacity: 1;
+.path-finder.node.center {
+    fill: var(--path-finder-node-selected-fill, purple);
+    stroke: var(--path-finder-node-selected-stroke, var(--text-normal));
+    opacity: var(--path-finder-node-selected-opacity, 1);
 }
 
-.node.unselected {
-    opacity: 0.5;
+.path-finder.node.unselected {
+    fill: var(--path-finder-unselected-node-fill,inherit);
+    stroke: var(--path-finder-node-unselected-stroke,inherit);
+    opacity: var(--path-finder-unselected-node-opacity, 0.5);
 }
 
-.node-circle {
-    r: 10px;
+.path-finder.node-circle {
+    r: var(--path-finder-node-radius,10px);
 }
 
-.node-circle.center {
-    r: 15px;
-    stroke-width: 3px;
+.path-finder.node-circle.unselected{
+    r: var(--path-finder-node-unselected-radius,var(--path-finder-node-radius,10px));
+    /* r: unset; */
 }
 
-.node-text {
-    fill: var(--text-normal);
-    stroke-width: 0.1px;
-    font-size: large;
-    opacity: 0.5;
-    x: 0;
-    y: -20;
-    text-anchor: middle;
+.path-finder.node-circle.selected{
+    r: var(--path-finder-node-selected-radius,var(--path-finder-node-radius,10px));
+    /* r: unset; */
 }
 
-.node-text.selected {
-    font-size: large;
-    opacity: 1;
+.path-finder.node-circle.center {
+    r: var(--path-finder-node-center-radius,15px);
+    stroke-width: var(--path-finder-node-center-stroke-width,3px);
 }
 
-.node-text.center {
-    font-size: x-large;
-    opacity: 1;
+.path-finder.node-text {
+    fill: var(--path-finder-node-text-fill,var(--text-normal));
+    stroke-width: var(--path-finder-node-text-stroke-width,0.1px);
+    font-size: var(--path-finder-node-text-stroke-width,large);
+    opacity: var(--path-finder-node-text-opacity,0.5);
+    text-anchor: var(--path-finder-node-text-anchor,middle);
 }
 
-.node-text.unselected {
-    opacity: 0.1;
+.path-finder.node-text.selected {
+    font-size: var(--path-finder-node-selected-text-font-size,large);
+    opacity: var(--path-finder-node-selected-text-opacity,1);
+}
+
+.path-finder.node-text.center {
+    font-size: var(--path-finder-node-center-text-font-size,x-large);
+    opacity: var(--path-finder-node-center-text-opacity,1);
+}
+
+.path-finder.node-text.unselected {
+    opacity: var(--path-finder-node-unselected-text-opacity,0.1);
 }
 
 .path-finder.panel-container {

@@ -102,10 +102,6 @@ export async function ForceGraphWithLabels(
 		linkType?: any;
 	} = {}
 ) {
-	let global = document.getElementsByClassName("view-content")[0],
-		x = global.clientWidth,
-		y = global.clientHeight;
-	(width = x), (height = y);
 	let nodes = getNodes(graph),
 		links = getLinks(graph);
 
@@ -168,7 +164,7 @@ export async function ForceGraphWithLabels(
 		.classed("path-finder path-graph", true)
 		.attr("width", width)
 		.attr("height", height)
-		.attr("viewBox", [0, 0, width, height])
+		.attr("viewBox", [0, 0, Infinity, Infinity])
 		.style("font", "12px sans-serif");
 
 	svg.append("defs")

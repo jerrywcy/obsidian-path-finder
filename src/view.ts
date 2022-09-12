@@ -23,16 +23,22 @@ export class PathGraphView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "Path view";
+		return "Path Graph View";
 	}
 
 	onResize(): void {
-		const container = this.containerEl.children[1];
-		const svg = container.getElementsByClassName(
+		const { contentEl } = this;
+		const svg = contentEl.getElementsByClassName(
 			"path-finder path-graph"
 		)[0];
-		svg.setAttribute("height", container.clientHeight.toString());
-		svg.setAttribute("width", container.clientWidth.toString());
+		let width = contentEl.clientWidth,
+			height = contentEl.clientHeight;
+		svg.setAttribute(
+			"viewBox",
+			`${-height / 2},${-width / 2},${height},${width}`
+		);
+		svg.setAttribute("width", width.toString());
+		svg.setAttribute("height", height.toString());
 	}
 
 	/**
@@ -90,8 +96,8 @@ export class PathGraphView extends ItemView {
 	 * @param graph The graph.
 	 */
 	setData(from: any, to: any, length: number, graph: ExtendedGraph) {
-		const container = this.containerEl.children[1];
-		container.empty();
+		const contentEl = this.contentEl;
+		contentEl.empty();
 
 		let newGraph = new ExtendedGraph();
 		newGraph.addVertice(from);
@@ -101,7 +107,8 @@ export class PathGraphView extends ItemView {
 		this.source = source;
 		this.target = target;
 		ForceGraphWithLabels(
-			container,
+			this,
+			contentEl,
 			getNextPath(graph.getID(from), graph.getID(to), length, graph),
 			{
 				graph: newGraph,
@@ -132,9 +139,17 @@ export class PathGraphView extends ItemView {
 		);
 	}
 
+	nextPath() {}
+
+	prevPath() {}
+
+	openPanel() {}
+
+	closePanel() {}
+
 	async onOpen() {
-		const container = this.containerEl.children[1];
-		container.empty();
+		const contentEl = this.contentEl;
+		contentEl.empty();
 	}
 
 	async onClose() {}

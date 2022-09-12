@@ -1,6 +1,7 @@
 import * as d3 from "d3";
-import { AbstractTextComponent, Notice, setIcon } from "obsidian";
+import { Notice, setIcon } from "obsidian";
 import { ExtendedGraph } from "src/algorithms/graph/types";
+import { PathGraphView } from "src/view";
 
 export class d3ForceGraphNode {
 	// Internal property
@@ -31,7 +32,8 @@ export class d3ForceGraphLink {
 // Released under the ISC license.
 // https://observablehq.com/@d3/force-directed-graph
 export async function ForceGraphWithLabels(
-	container: Element,
+	view: PathGraphView,
+	contentEl: Element,
 	nextPath: AsyncGenerator<Array<any> | undefined>,
 	{
 		graph,
@@ -102,6 +104,7 @@ export async function ForceGraphWithLabels(
 		linkType?: any;
 	} = {}
 ) {
+	contentEl.id = Date.now().toString();
 	let nodes = getNodes(graph),
 		links = getLinks(graph);
 
@@ -150,7 +153,7 @@ export async function ForceGraphWithLabels(
 	// .force("x", d3.forceX())
 	// .force("y", d3.forceY());
 
-	container.setAttribute(
+	contentEl.setAttribute(
 		"style",
 		"padding: 0px; overflow: hidden; position: relative;"
 	);
@@ -159,12 +162,15 @@ export async function ForceGraphWithLabels(
 		.create("div")
 		.classed("path-finder force-graph", true);
 
+	width = contentEl.clientWidth;
+	height = contentEl.clientHeight;
+
 	const svg = graphContainer
 		.append("svg")
 		.classed("path-finder path-graph", true)
 		.attr("width", width)
 		.attr("height", height)
-		.attr("viewBox", [0, 0, Infinity, Infinity])
+		.attr("viewBox", [-height / 2, -width / 2, height, width])
 		.style("font", "12px sans-serif");
 
 	svg.append("defs")
@@ -338,6 +344,23 @@ export async function ForceGraphWithLabels(
 
 	simulation.on("tick", ticked);
 
+	// svg.selectAll("g").attr(
+	// 	"transform",
+	// 	`translate(${width / 2},${height / 2})`
+	// );
+
+	// let maxX = -Infinity,
+	// 	minX = Infinity,
+	// 	maxY = -Infinity,
+	// 	minY = Infinity;
+	// node.each((d: d3ForceGraphNode) => {
+	// 	maxX = Math.max(maxX, d.x);
+	// 	minX = Math.min(minX, d.x);
+	// 	maxY = Math.max(maxY, d.y);
+	// 	minY = Math.min(minY, d.y);
+	// });
+	// console.log(minX, maxX, minY, maxY);
+
 	svg.call(
 		d3
 			.zoom()
@@ -348,8 +371,8 @@ export async function ForceGraphWithLabels(
 				);
 			})
 			.extent([
-				[0, 0],
-				[width, height],
+				[-width / 2, -height / 2],
+				[width / 2, height / 2],
 			])
 			.scaleExtent([0.1, 8])
 			.on("zoom", zoomed)
@@ -529,16 +552,22 @@ export async function ForceGraphWithLabels(
 		}
 		calculationComplete = true;
 	}
-
-	leftButtonDiv.on("click", function (evt, d) {
-		index--;
-		updatePathContent();
-	});
-
-	rightButtonDiv.on("click", function (evt, d) {
+	view.nextPath = function () {
+		// console.log("Next Path");
+		// if (panelContainer.classed("is-close")) return;
 		index++;
 		updatePathContent();
-	});
+	};
+	view.prevPath = function () {
+		// console.log("Prev Path");
+		// if (panelContainer.classed("is-close")) return;
+		index--;
+		updatePathContent();
+	};
+
+	leftButtonDiv.on("click", view.prevPath);
+
+	rightButtonDiv.on("click", view.nextPath);
 
 	function updateGraph() {
 		let nodes = getNodes(graph);
@@ -741,14 +770,14 @@ export async function ForceGraphWithLabels(
 
 	let graphContainerNode: HTMLDivElement = graphContainer.node();
 	let panelContainerNode: HTMLDivElement = panelContainer.node();
-	container.appendChild(graphContainerNode);
-	container.appendChild(panelContainerNode);
+	contentEl.appendChild(graphContainerNode);
+	contentEl.appendChild(panelContainerNode);
 
 	const closeButton = panelContainerNode.createDiv();
 	closeButton.addClasses(["path-finder", "panel-button", "mod-close"]);
 	setIcon(closeButton, "cross", 20);
 	closeButton.style.display = "none";
-	closeButton.onClickEvent(function (evt) {
+	view.closePanel = function () {
 		this.style.display = "none";
 		panelContainerNode.toggleClass("is-close", true);
 		let path = paths[index];
@@ -759,16 +788,18 @@ export async function ForceGraphWithLabels(
 			linkMap.set(`${path[i]}|${path[i + 1]}`, true);
 		}
 		setSelectedPath(nodeMap, linkMap, false);
-	});
+	}.bind(closeButton);
+	closeButton.onClickEvent(view.closePanel);
 	closeButton.setAttribute("aria-label", "Close");
 
 	const openButton = panelContainerNode.createDiv();
 	openButton.addClasses(["path-finder", "panel-button", "mod-open"]);
 	setIcon(openButton, "right-triangle", 20);
-	openButton.onClickEvent(function (evt) {
+	view.openPanel = function () {
 		panelContainerNode.toggleClass("is-close", false);
 		closeButton.style.display = "flex";
-	});
+	};
+	openButton.onClickEvent(view.openPanel);
 	openButton.setAttribute("aria-label", "Open");
 
 	panelContainerNode.addEventListener("mouseenter", function (evt) {

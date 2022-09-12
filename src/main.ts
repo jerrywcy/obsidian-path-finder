@@ -1,4 +1,4 @@
-import { normalizePath, Notice, Plugin } from "obsidian";
+import { Hotkey, normalizePath, Notice, Plugin } from "obsidian";
 
 import { ExtendedGraph } from "src/algorithms/graph/types";
 import { PathsModal } from "./modals";
@@ -9,10 +9,22 @@ import {
 	VIEW_TYPE_PATHVIEW,
 } from "./view";
 import { dijkstra } from "./algorithms/graph/dijkstra";
+import {
+	DEFAULT_SETTINGS,
+	PathFinderPluginSettings,
+	PathFinderPluginSettingTab,
+} from "./settings";
+
+import { basename, extname } from "path/posix";
 
 export default class PathFinderPlugin extends Plugin {
+	settings: PathFinderPluginSettings;
+
 	async onload() {
 		console.log("Loading Path Finder plugin");
+
+		await this.loadSettings();
+		this.addSettingTab(new PathFinderPluginSettingTab(this.app, this));
 
 		this.addCommand({
 			id: "find-shortest-path",
@@ -56,11 +68,44 @@ export default class PathFinderPlugin extends Plugin {
 		);
 
 		this.registerView(VIEW_TYPE_PATHVIEW, (leaf) => new PathView(leaf));
+		this.registerDomEvent(document, "keydown", (evt) => {
+			let activeView = app.workspace.getActiveViewOfType(PathGraphView);
+			if (!activeView) return;
+			// console.log(evt);
+			const { settings } = this;
+			if (this.isKey(evt, settings.prevPathHotkey)) activeView.prevPath();
+			if (this.isKey(evt, settings.nextPathHotkey)) activeView.nextPath();
+			if (this.isKey(evt, settings.openPanelHotkey))
+				activeView.openPanel();
+			if (this.isKey(evt, settings.closePanelHotkey))
+				activeView.closePanel();
+		});
 	}
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+	}
+
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
+	isKey(evt: KeyboardEvent, hotkey: Hotkey): boolean {
+		if (evt.ctrlKey != hotkey.modifiers.includes("Ctrl")) return false;
+		if (evt.shiftKey != hotkey.modifiers.includes("Shift")) return false;
+		if (evt.altKey != hotkey.modifiers.includes("Alt")) return false;
+		if (evt.metaKey != hotkey.modifiers.includes("Meta")) return false;
+		if (evt.key != hotkey.key) return false;
+		return true;
 	}
 
 	/**
@@ -154,10 +199,15 @@ export default class PathFinderPlugin extends Plugin {
 		graph: ExtendedGraph
 	) {
 		let { workspace } = app;
-		workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
+		// workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 
 		let pathGraphViewLeaf = workspace.getLeaf(true);
-
+		pathGraphViewLeaf.getDisplayText = function () {
+			return `${basename(from, extname(from))}->${basename(
+				to,
+				extname(to)
+			)}${length == Infinity ? "" : ` within ${length} steps`}`;
+		};
 		await pathGraphViewLeaf.setViewState({
 			type: VIEW_TYPE_PATHGRAPHVIEW,
 			active: true,
@@ -171,9 +221,7 @@ export default class PathFinderPlugin extends Plugin {
 		}
 		pathGraphView.setData(from, to, length, graph);
 
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW)[0]
-		);
+		this.app.workspace.revealLeaf(pathGraphViewLeaf);
 	}
 
 	/**
@@ -200,14 +248,20 @@ export default class PathFinderPlugin extends Plugin {
 			return;
 		}
 		let { workspace } = app;
-		workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+		// workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
 
-		await workspace.getLeaf(true).setViewState({
+		let pathViewLeaf = workspace.getLeaf(true);
+		pathViewLeaf.getDisplayText = function () {
+			return `${basename(from, extname(from))}->${basename(
+				to,
+				extname(to)
+			)}${length == Infinity ? "" : ` within ${length} steps`}`;
+		};
+		await pathViewLeaf.setViewState({
 			type: VIEW_TYPE_PATHVIEW,
 			active: true,
 		});
 
-		let pathViewLeaf = workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0];
 		let pathView = pathViewLeaf.view;
 		if (!(pathView instanceof PathView)) {
 			new Notice("Failed to open Path View. Please try again.");
@@ -216,8 +270,6 @@ export default class PathFinderPlugin extends Plugin {
 		}
 		pathView.setData(source, target, length, graph);
 
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(VIEW_TYPE_PATHVIEW)[0]
-		);
+		this.app.workspace.revealLeaf(pathViewLeaf);
 	}
 }

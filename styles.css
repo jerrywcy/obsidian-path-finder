@@ -553,7 +553,7 @@ settings:
     left: 8px;
     top: 8px;
     padding: 6px 16px 8px 8px;
-    background-color: var(--background-primary-alt);
+    background-color: var(--graph-control-bg);
     min-width: 140px;
     max-width: 240px;
     border: 1px solid var(--background-modifier-border);
@@ -563,7 +563,7 @@ settings:
 }
 
 .path-finder.panel-container.is-close {
-    background-color: var(--background-primary);
+    background-color: var(--graph-control-bg);
     border: 1px solid transparent;
     padding: 6px 8px 2px 8px;
     min-width: inherit;
@@ -572,7 +572,7 @@ settings:
 .path-finder.panel-button {
     color: var(--text-faint);
     cursor: var(--cursor);
-    background-color: var(--background-primary);
+    background-color: var(--graph-control-bg);
     z-index: 1;
 }
 
@@ -595,7 +595,7 @@ settings:
 }
 
 .path-finder.panel-button.mod-prev {
-    background-color: var(--background-primary);
+    background-color: var(--graph-control-bg);
     width: 20px;
     height: 20px;
     display: flex;
@@ -609,7 +609,7 @@ settings:
 }
 
 .path-finder.panel-button.mod-next {
-    background-color: var(--background-primary);
+    background-color: var(--graph-control-bg);
     width: 20px;
     height: 20px;
     display: flex;
@@ -631,7 +631,7 @@ settings:
 .path-finder.panel-display.path-item {
     border: 1px solid var(--background-modifier-border);
     border-radius: 6px;
-    background-color: var(--background-primary-alt);
+    background-color: var(--graph-control-bg);
     margin-top: 5px;
     margin-bottom: 5px;
 }
@@ -639,7 +639,7 @@ settings:
 .path-finder.panel-display.path-item.selected {
     border: 1px solid var(--background-modifier-border);
     border-radius: 6px;
-    background-color: var(--background-primary);
+    background-color: var(--graph-control-bg);
     margin-top: 5px;
     margin-bottom: 5px;
 }

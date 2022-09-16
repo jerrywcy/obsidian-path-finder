@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { Notice, setIcon } from "obsidian";
 import { ExtendedGraph } from "src/algorithms/graph/types";
 import { PathGraphView } from "src/view";
+import { GraphControls } from "./GraphControls";
 
 export class d3ForceGraphNode {
 	// Internal property
@@ -33,7 +34,7 @@ export class d3ForceGraphLink {
 // https://observablehq.com/@d3/force-directed-graph
 export async function ForceGraphWithLabels(
 	view: PathGraphView,
-	contentEl: Element,
+	contentEl: HTMLElement,
 	nextPath: AsyncGenerator<Array<any> | undefined>,
 	{
 		graph,
@@ -58,7 +59,7 @@ export async function ForceGraphWithLabels(
 		nodeStrokeWidth = 1.5, // node stroke width, in pixels
 		nodeStrokeOpacity = 1, // node stroke opacity
 		nodeRadius = 5, // node radius, in pixels
-		nodeStrength = -400,
+		nodeStrength = -1500,
 		linkSource = ({ source }: d3ForceGraphLink) => source, // given d in links, returns a node identifier string
 		linkTarget = ({ target }: d3ForceGraphLink) => target, // given d in links, returns a node identifier string
 		linkStroke = "#999", // link stroke color
@@ -145,13 +146,14 @@ export async function ForceGraphWithLabels(
 	if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
 	if (linkStrength !== undefined) forceLink.strength(linkStrength);
 
+	let xCenter = 0,
+		yCenter = 0;
 	const simulation = d3
 		.forceSimulation(nodes)
 		.force("link", forceLink)
 		.force("charge", forceNode)
-		.force("center", d3.forceCenter());
-	// .force("x", d3.forceX())
-	// .force("y", d3.forceY());
+		.force("x", d3.forceX(xCenter))
+		.force("y", d3.forceY(yCenter));
 
 	contentEl.setAttribute(
 		"style",
@@ -170,16 +172,17 @@ export async function ForceGraphWithLabels(
 		.classed("path-finder path-graph", true)
 		.attr("width", width)
 		.attr("height", height)
-		.attr("viewBox", [-height / 2, -width / 2, height, width])
-		.style("font", "12px sans-serif");
+		.attr("viewBox", [-height / 2, -width / 2, height, width]);
+	// .style("font", "12px sans-serif");
 
-	svg.append("defs")
-		// .selectAll("marker")
-		.append("marker")
-		// .data(linkGroups)
-		// .join("marker")
-		// .attr("id", d => `arrow-${d}`)
-		.attr("id", "arrow")
+	let defs = svg
+		.append("defs")
+		.selectAll("marker")
+		// .append("marker")
+		.data(linkGroups)
+		.join("marker")
+		.attr("id", (d) => `arrow-${d}`)
+		// .attr("id", "arrow")
 		.attr("viewBox", "0 -5 10 10")
 		.attr("refX", 10)
 		.attr("refY", -0.5)
@@ -201,8 +204,8 @@ export async function ForceGraphWithLabels(
 		.data(links)
 		.join("path")
 		.classed("path-finder link", true)
-		// .attr("marker-end", d => `url(#arrow-${d.type})`);
-		.attr("marker-end", `url(#arrow)`);
+		.attr("marker-end", (d) => `url(#arrow-${d.type})`);
+	// .attr("marker-end", `url(#arrow)`);
 
 	let node = svg
 		.append("g")
@@ -813,4 +816,117 @@ export async function ForceGraphWithLabels(
 	setIcon(leftButtonContainer, "left-arrow", 20);
 	const rightButtonContainer = rightButtonDiv.node();
 	setIcon(rightButtonContainer, "right-arrow", 20);
+
+	let graphControls = new GraphControls(contentEl);
+	let filterCategory = graphControls.addCategory("filter", "Filter", false);
+	filterCategory.addSetting().addText((text) => {
+		text.onChange((value) => {
+			console.log(value);
+		});
+	});
+	let forcesCategory = graphControls.addCategory("forces", "Forces", false);
+	forcesCategory
+		.addSetting()
+		.setName("Repel force")
+		.addSlider((slider) => {
+			slider
+				.setLimits(-2000, -500, 10)
+				.setValue(-1500)
+				.setDynamicTooltip()
+				.onChange((value) => {
+					nodeStrength = value;
+					forceNode.strength(nodeStrength);
+					simulation.force("charge", forceNode);
+					simulation.alpha(1).restart().tick();
+				});
+		})
+		.settingEl.addClass("mod-slider");
+	forcesCategory
+		.addSetting()
+		.setName("Link force")
+		.addSlider((slider) => {
+			slider
+				.setLimits(-1000, 0, 10)
+				.setValue(-400)
+				.setDynamicTooltip()
+				.onChange((value) => {
+					linkStrength = value;
+					forceLink.strength(linkStrength);
+					simulation.force("link", forceLink);
+					simulation.alpha(1).restart().tick();
+				});
+		})
+		.settingEl.addClass("mod-slider");
+	forcesCategory
+		.addSetting()
+		.setName("X force")
+		.addToggle((toggle) => {
+			toggle.setValue(true).onChange((on) => {
+				if (on) {
+					simulation.force("x", d3.forceX(xCenter));
+				} else {
+					simulation.force("x", null);
+				}
+				simulation.alpha(1).restart().tick();
+			});
+		})
+		.settingEl.addClass("mod-toggle");
+	forcesCategory
+		.addSetting()
+		.setName("X force center")
+		.addText((text) => {
+			text.setValue("0").onChange((value) => {
+				if (value === "") {
+					text.setValue("0");
+					value = "0";
+				}
+				xCenter = Number.parseInt(value);
+				if (isNaN(xCenter)) {
+					new Notice(
+						`Illegal X force center: ${value} is not a number.`
+					);
+					return;
+				}
+				if (simulation.force("x")) {
+					simulation.force("x", d3.forceX(xCenter));
+					simulation.alpha(1).restart().tick();
+				}
+			});
+		});
+	forcesCategory
+		.addSetting()
+		.setName("Y force")
+		.addToggle((toggle) => {
+			toggle.setValue(true).onChange((on) => {
+				if (on) {
+					simulation.force("y", d3.forceY(yCenter));
+				} else {
+					simulation.force("y", null);
+				}
+				simulation.alpha(1).restart().tick();
+			});
+		})
+		.settingEl.addClass("mod-toggle");
+	forcesCategory
+		.addSetting()
+		.setName("Y force center")
+		.addText((text) => {
+			text.setValue("0").onChange((value) => {
+				if (value === "") {
+					text.setValue("0");
+					value = "0";
+				}
+				yCenter = Number.parseInt(value);
+				if (isNaN(yCenter)) {
+					new Notice(
+						`Illegal Y force center: ${value} is not a number.`
+					);
+					return;
+				}
+				if (simulation.force("y")) {
+					simulation.force("y", d3.forceY(yCenter));
+					simulation.alpha(1).restart().tick();
+				}
+			});
+		});
 }

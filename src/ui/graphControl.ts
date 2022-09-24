@@ -3,8 +3,8 @@ import { debounce, setIcon, Setting } from "obsidian";
 
 const transition = "all 100ms cubic-bezier(0.02,0.01,0.47,1)";
 
-export class GraphControlsCategory {
-	graphControls: GraphControls;
+export class GraphControlCategory {
+	graphControls: GraphControl;
 	settingsContainer: d3.Selection<HTMLDivElement, undefined, null, undefined>;
 	settings: Setting[];
 	section: d3.Selection<HTMLDivElement, undefined, null, undefined>;
@@ -75,7 +75,7 @@ export class GraphControlsCategory {
 	}
 
 	constructor(
-		graphControls: GraphControls,
+		graphControls: GraphControl,
 		id: string,
 		header: string,
 		collapse: boolean = true
@@ -125,9 +125,9 @@ export class GraphControlsCategory {
 	}
 }
 
-export class GraphControls {
+export class GraphControl {
 	container: d3.Selection<HTMLDivElement, undefined, null, undefined>;
-	categories: GraphControlsCategory[];
+	categories: GraphControlCategory[];
 
 	isClose() {
 		return this.container.classed("is-close");
@@ -173,7 +173,7 @@ export class GraphControls {
 	}
 
 	addCategory(id: string, header: string, collapse?: boolean) {
-		let category = new GraphControlsCategory(this, id, header, collapse);
+		let category = new GraphControlCategory(this, id, header, collapse);
 		this.categories.push(category);
 		return category;
 	}

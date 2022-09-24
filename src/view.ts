@@ -1,7 +1,7 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 
-import { ExtendedGraph } from "src/algorithms/graph/types";
-import { getNextPath } from "./algorithms/graph/GetNextPath";
+import { WeightedGraphWithNodeID } from "src/algorithms/graph/weightedGraphWithNodeId";
+import { getNextPath } from "./algorithms/graph/getNextPath";
 import {
 	d3ForceGraphLink,
 	d3ForceGraphNode,
@@ -46,9 +46,9 @@ export class PathGraphView extends ItemView {
 	 * @param graph The graph.
 	 * @returns An array of objects, each representing one node. {id: any, group: "source" | "target" | "node"}
 	 */
-	getNodes(graph: ExtendedGraph): d3ForceGraphNode[] {
+	getNodes(graph: WeightedGraphWithNodeID): d3ForceGraphNode[] {
 		let ret: d3ForceGraphNode[] = [];
-		for (let i = 1; i <= graph.getN(); i++) {
+		for (let i = 1; i <= graph.getNodeCount(); i++) {
 			ret.push({
 				id: graph.getName(i),
 				group:
@@ -67,11 +67,11 @@ export class PathGraphView extends ItemView {
 	 * @param graph The graph.
 	 * @returns An array of objects, each representing one link.
 	 */
-	getLinks(graph: ExtendedGraph): d3ForceGraphLink[] {
+	getLinks(graph: WeightedGraphWithNodeID): d3ForceGraphLink[] {
 		let ret: d3ForceGraphLink[] = [];
-		for (let i = 1; i <= graph.getM(); i++) {
-			let fromFilePath = graph.getName(graph.edges[i].u),
-				toFilePath = graph.getName(graph.edges[i].v);
+		for (let i = 1; i <= graph.getEdgeCount(); i++) {
+			let fromFilePath = graph.getName(graph.edges[i].source),
+				toFilePath = graph.getName(graph.edges[i].target);
 			if (!fromFilePath || !toFilePath) continue;
 			let resolvedLinks = app.metadataCache.resolvedLinks;
 			if (resolvedLinks[fromFilePath][toFilePath]) {
@@ -95,11 +95,16 @@ export class PathGraphView extends ItemView {
 	 * @param length The maximum length of all paths shown.
 	 * @param graph The graph.
 	 */
-	setData(from: any, to: any, length: number, graph: ExtendedGraph) {
+	setData(
+		from: any,
+		to: any,
+		length: number,
+		graph: WeightedGraphWithNodeID
+	) {
 		const contentEl = this.contentEl;
 		contentEl.empty();
 
-		let newGraph = new ExtendedGraph();
+		let newGraph = new WeightedGraphWithNodeID();
 		newGraph.addVertice(from);
 		newGraph.addVertice(to);
 		let source = newGraph.getID(from);
@@ -185,7 +190,7 @@ export class PathView extends ItemView {
 		source: number,
 		target: number,
 		length: number,
-		graph: ExtendedGraph
+		graph: WeightedGraphWithNodeID
 	) {
 		this.source = source;
 		this.target = target;

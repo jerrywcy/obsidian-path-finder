@@ -7,7 +7,9 @@
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +23,8 @@
     "@types/node": "^16.11.43",
     "@typescript-eslint/eslint-plugin": "5.29.0",
     "@typescript-eslint/parser": "5.29.0",
+    "@vitest/coverage-c8": "^0.23.4",
+    "@vitest/ui": "^0.23.4",
     "builtin-modules": "3.3.0",
     "esbuild": "^0.14.47",
     "esbuild-svelte": "^0.7.1",
@@ -32,7 +36,8 @@
     "ts-loader": "^9.3.1",
     "tslib": "^2.0.0",
     "typescript": "^4.7.4",
-    "typescript-eslint": "^0.0.1-alpha.0"
+    "typescript-eslint": "^0.0.1-alpha.0",
+    "vitest": "^0.23.4"
   },
   "moduleFileExtensions": [
     "js",

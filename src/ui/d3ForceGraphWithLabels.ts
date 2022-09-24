@@ -1,8 +1,9 @@
 import * as d3 from "d3";
 import { Notice, setIcon } from "obsidian";
-import { ExtendedGraph } from "src/algorithms/graph/types";
+import { WeightedGraphWithNodeID } from "src/algorithms/graph/weightedGraphWithNodeId";
 import { PathGraphView } from "src/view";
-import { GraphControls } from "./GraphControls";
+import { GraphControl, GraphControlCategory } from "./graphControl";
+import { WeightedGraph } from "../algorithms/graph/weightedGraph";
 
 export class d3ForceGraphNode {
 	// Internal property
@@ -45,9 +46,9 @@ export async function ForceGraphWithLabels(
 	{
 		// nodes: any[];
 		// links: any[];
-		graph: ExtendedGraph;
-		getNodes: (g: ExtendedGraph) => any[];
-		getLinks: (g: ExtendedGraph) => any[];
+		graph: WeightedGraphWithNodeID;
+		getNodes: (g: WeightedGraphWithNodeID) => any[];
+		getLinks: (g: WeightedGraphWithNodeID) => any[];
 	},
 	{
 		nodeId = (d) => d.id, // given d in nodes, returns a unique identifier (string)
@@ -110,39 +111,46 @@ export async function ForceGraphWithLabels(
 		links = getLinks(graph);
 
 	// Compute values.
-	let N = d3.map(nodes, nodeId).map(intern);
-	let LS = d3.map(links, linkSource).map(intern);
-	let LT = d3.map(links, linkTarget).map(intern);
-	let LG = d3.map(links, linkType).map(intern);
-	if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
-	let T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
-	let G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
-	let W =
+	let nodeIdArray = d3.map(nodes, nodeId).map(intern);
+	let linkSourceArray = d3.map(links, linkSource).map(intern);
+	let linkTargetArray = d3.map(links, linkTarget).map(intern);
+	let linkGroupArray = d3.map(links, linkType).map(intern);
+	if (nodeTitle === undefined) nodeTitle = (_, i) => nodeIdArray[i];
+	let nodeTitleArray = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
+	let nodeGroupArray =
+		nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
+	let linkStrokeWidthArray =
 		typeof linkStrokeWidth !== "function"
 			? null
 			: d3.map(links, linkStrokeWidth);
-	let L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
+	let linkStrokeArray =
+		typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
 
 	// Replace the input nodes and links with mutable objects for the simulation.
 	let existLink = new Map();
 
 	nodes = nodes.map((d: any, i: number) => {
-		return { id: N[i], group: nodeGroup(d) };
+		return { id: nodeIdArray[i], group: nodeGroup(d) };
 	});
 	links = links.map((d: any, i: number) => {
-		existLink.set(`${LS[i]}|${LT[i]}`, true);
-		return { source: LS[i], target: LT[i], type: LG[i] };
+		existLink.set(`${linkSourceArray[i]}|${linkTargetArray[i]}`, true);
+		return {
+			source: linkSourceArray[i],
+			target: linkTargetArray[i],
+			type: linkGroupArray[i],
+		};
 	});
 
 	// Compute default domains.
-	if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
+	if (nodeGroupArray && nodeGroups === undefined)
+		nodeGroups = d3.sort(nodeGroupArray);
 
 	// Construct the scales.
 	let color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
 
 	// Construct the forces.
 	const forceNode = d3.forceManyBody();
-	const forceLink = d3.forceLink(links).id(({ index: i }) => N[i]);
+	const forceLink = d3.forceLink(links).id(({ index: i }) => nodeIdArray[i]);
 	if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
 	if (linkStrength !== undefined) forceLink.strength(linkStrength);
 
@@ -204,7 +212,8 @@ export async function ForceGraphWithLabels(
 		.data(links)
 		.join("path")
 		.classed("path-finder link", true)
-		.attr("marker-end", (d) => `url(#arrow-${d.type})`);
+		.attr("marker-end", (d) => `url(#arrow-${d.type})`)
+		.text("test");
 	// .attr("marker-end", `url(#arrow)`);
 
 	let node = svg
@@ -325,20 +334,26 @@ export async function ForceGraphWithLabels(
 
 	node.append("circle").classed("path-finder node-circle", true);
 
-	if (W)
+	if (linkStrokeWidthArray)
 		link.attr(
 			"stroke-width",
-			({ index: i }: d3ForceGraphLink): any => W[i]
+			({ index: i }: d3ForceGraphLink): any => linkStrokeWidthArray[i]
 		);
-	if (L) link.attr("stroke", ({ index: i }: d3ForceGraphLink): any => L[i]);
-	if (G)
-		node.attr("fill", ({ index: i }: d3ForceGraphNode): any => color(G[i]));
-	if (T)
+	if (linkStrokeArray)
+		link.attr(
+			"stroke",
+			({ index: i }: d3ForceGraphLink): any => linkStrokeArray[i]
+		);
+	if (nodeGroupArray)
+		node.attr("fill", ({ index: i }: d3ForceGraphNode): any =>
+			color(nodeGroupArray[i])
+		);
+	if (nodeTitleArray)
 		node.append("text")
 			.attr("x", 0)
 			.attr("y", -20)
 			.attr("align", "center")
-			.text(({ index: i }: d3ForceGraphNode) => T[i])
+			.text(({ index: i }: d3ForceGraphNode) => nodeTitleArray[i])
 			.classed("path-finder node-text", true);
 	// .clone(true).lower()
 	// .classed("outer", true);
@@ -636,7 +651,7 @@ export async function ForceGraphWithLabels(
 			.data(links, (d: d3ForceGraphLink) => `${d.source}|${d.target}`)
 			.join("path")
 			.classed("path-finder link", true)
-			.attr("marker-end", `url(#arrow)`);
+			.attr("marker-end", (d) => `url(#arrow-${d.type})`);
 
 		const forceLink = d3.forceLink(links).id(({ index: i }) => N[i]);
 		if (linkStrength !== undefined) forceLink.strength(linkStrength);
@@ -817,7 +832,7 @@ export async function ForceGraphWithLabels(
 	const rightButtonContainer = rightButtonDiv.node();
 	setIcon(rightButtonContainer, "right-arrow", 20);
 
-	let graphControls = new GraphControls(contentEl);
+	let graphControls = new GraphControl(contentEl);
 	let filterCategory = graphControls.addCategory("filter", "Filter", false);
 	filterCategory.addSetting().addText((text) => {
 		text.onChange((value) => {
@@ -825,92 +840,107 @@ export async function ForceGraphWithLabels(
 		});
 	});
 	let forcesCategory = graphControls.addCategory("forces", "Forces", false);
-	forcesCategory
-		.addSetting()
-		.setName("Repel force")
-		.addSlider((slider) => {
-			slider
-				.setLimits(-2000, -500, 10)
-				.setValue(-1500)
-				.setDynamicTooltip()
-				.onChange((value) => {
-					nodeStrength = value;
-					forceNode.strength(nodeStrength);
-					simulation.force("charge", forceNode);
+	addRepelForceSetting();
+	function addRepelForceSetting() {
+		let setting = forcesCategory.addSetting();
+		setting
+			.setName("Repel force")
+			.addSlider((slider) => {
+				slider
+					.setLimits(-2000, -500, 10)
+					.setValue(-1500)
+					.setDynamicTooltip()
+					.onChange((value) => {
+						nodeStrength = value;
+						forceNode.strength(nodeStrength);
+						simulation.force("charge", forceNode);
+						simulation.alpha(1).restart().tick();
+					});
+			})
+			.settingEl.addClass("mod-slider");
+	}
+	addLinkForceSetting();
+	function addLinkForceSetting() {
+		let setting = forcesCategory.addSetting();
+		setting
+			.setName("Link force")
+			.addSlider((slider) => {
+				slider
+					.setLimits(-1000, 0, 10)
+					.setValue(-400)
+					.setDynamicTooltip()
+					.onChange((value) => {
+						linkStrength = value;
+						forceLink.strength(linkStrength);
+						simulation.force("link", forceLink);
+						simulation.alpha(1).restart().tick();
+					});
+			})
+			.settingEl.addClass("mod-slider");
+	}
+	addXForceSetting();
+	function addXForceSetting() {
+		let setting = forcesCategory.addSetting();
+		setting
+			.setName("X force")
+			.addToggle((toggle) => {
+				toggle.setValue(true).onChange((on) => {
+					if (on) {
+						simulation.force("x", d3.forceX(xCenter));
+					} else {
+						simulation.force("x", null);
+					}
 					simulation.alpha(1).restart().tick();
 				});
-		})
-		.settingEl.addClass("mod-slider");
-	forcesCategory
-		.addSetting()
-		.setName("Link force")
-		.addSlider((slider) => {
-			slider
-				.setLimits(-1000, 0, 10)
-				.setValue(-400)
-				.setDynamicTooltip()
-				.onChange((value) => {
-					linkStrength = value;
-					forceLink.strength(linkStrength);
-					simulation.force("link", forceLink);
+			})
+			.settingEl.addClass("mod-toggle");
+	}
+	addXForceCenterSetting();
+	function addXForceCenterSetting() {
+		forcesCategory
+			.addSetting()
+			.setName("X force center")
+			.addText((text) => {
+				text.setValue("0").onChange((value) => {
+					if (value === "") {
+						text.setValue("0");
+						value = "0";
+					}
+					xCenter = Number.parseInt(value);
+					if (isNaN(xCenter)) {
+						new Notice(
+							`Illegal X force center: ${value} is not a number.`
+						);
+						return;
+					}
+					if (simulation.force("x")) {
+						simulation.force("x", d3.forceX(xCenter));
+						simulation.alpha(1).restart().tick();
+					}
+				});
+			});
+	}
+	addYForceSetting();
+	function addYForceSetting() {
+		let setting = forcesCategory.addSetting();
+		setting
+			.setName("Y force")
+			.addToggle((toggle) => {
+				toggle.setValue(true).onChange((on) => {
+					if (on) {
+						simulation.force("y", d3.forceY(yCenter));
+					} else {
+						simulation.force("y", null);
+					}
 					simulation.alpha(1).restart().tick();
 				});
-		})
-		.settingEl.addClass("mod-slider");
-	forcesCategory
-		.addSetting()
-		.setName("X force")
-		.addToggle((toggle) => {
-			toggle.setValue(true).onChange((on) => {
-				if (on) {
-					simulation.force("x", d3.forceX(xCenter));
-				} else {
-					simulation.force("x", null);
-				}
-				simulation.alpha(1).restart().tick();
-			});
-		})
-		.settingEl.addClass("mod-toggle");
-	forcesCategory
-		.addSetting()
-		.setName("X force center")
-		.addText((text) => {
-			text.setValue("0").onChange((value) => {
-				if (value === "") {
-					text.setValue("0");
-					value = "0";
-				}
-				xCenter = Number.parseInt(value);
-				if (isNaN(xCenter)) {
-					new Notice(
-						`Illegal X force center: ${value} is not a number.`
-					);
-					return;
-				}
-				if (simulation.force("x")) {
-					simulation.force("x", d3.forceX(xCenter));
-					simulation.alpha(1).restart().tick();
-				}
-			});
-		});
-	forcesCategory
-		.addSetting()
-		.setName("Y force")
-		.addToggle((toggle) => {
-			toggle.setValue(true).onChange((on) => {
-				if (on) {
-					simulation.force("y", d3.forceY(yCenter));
-				} else {
-					simulation.force("y", null);
-				}
-				simulation.alpha(1).restart().tick();
-			});
-		})
-		.settingEl.addClass("mod-toggle");
-	forcesCategory
-		.addSetting()
-		.setName("Y force center")
-		.addText((text) => {
+			})
+			.settingEl.addClass("mod-toggle");
+	}
+	addYForceCenterSetting();
+	function addYForceCenterSetting() {
+		let setting = forcesCategory.addSetting().setName("Y force center");
+		setting.addText((text) => {
 			text.setValue("0").onChange((value) => {
 				if (value === "") {
 					text.setValue("0");
@@ -929,4 +959,5 @@ export async function ForceGraphWithLabels(
 				}
 			});
 		});
+	}
 }

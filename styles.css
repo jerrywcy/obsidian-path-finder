@@ -502,9 +502,9 @@ settings:
 }
 
 .path-finder.node.unselected {
-    fill: var(--path-finder-unselected-node-fill,inherit);
+    fill: var(--path-finder-node-unselected-fill,inherit);
     stroke: var(--path-finder-node-unselected-stroke,inherit);
-    opacity: var(--path-finder-unselected-node-opacity, 0.5);
+    opacity: var(--path-finder-node-unselected-opacity, 0.5);
 }
 
 .path-finder.node-circle {

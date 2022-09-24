@@ -1,6 +1,6 @@
 import { Hotkey, normalizePath, Notice, Plugin } from "obsidian";
 
-import { ExtendedGraph } from "src/algorithms/graph/types";
+import { WeightedGraphWithNodeID } from "src/algorithms/graph/weightedGraphWithNodeId";
 import { PathsModal } from "./modals";
 import {
 	PathGraphView,
@@ -173,8 +173,8 @@ export default class PathFinderPlugin extends Plugin {
 	 * Get the graph formed by all notes in the vault.
 	 * @returns The graph formed by all notes in the vault.
 	 */
-	buildGraphFromLinks(): ExtendedGraph {
-		let graph = new ExtendedGraph();
+	buildGraphFromLinks(): WeightedGraphWithNodeID {
+		let graph = new WeightedGraphWithNodeID();
 		let { resolvedLinks } = app.metadataCache;
 		for (let fromFilePath in resolvedLinks) {
 			for (let toFilePath in resolvedLinks[fromFilePath]) {
@@ -196,7 +196,7 @@ export default class PathFinderPlugin extends Plugin {
 		from: any,
 		to: any,
 		length: number,
-		graph: ExtendedGraph
+		graph: WeightedGraphWithNodeID
 	) {
 		let { workspace } = app;
 		// workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
@@ -235,7 +235,7 @@ export default class PathFinderPlugin extends Plugin {
 		from: any,
 		to: any,
 		length: number,
-		graph: ExtendedGraph
+		graph: WeightedGraphWithNodeID
 	) {
 		let source = graph.getID(from),
 			target = graph.getID(to);

@@ -2,10 +2,12 @@ import {
 	App,
 	ButtonComponent,
 	Hotkey,
+	Modifier,
 	Platform,
 	PluginSettingTab,
 	Setting,
 } from "obsidian";
+import { format } from "path";
 import PathFinderPlugin from "./main";
 
 export interface PathFinderPluginSettings {
@@ -13,6 +15,51 @@ export interface PathFinderPluginSettings {
 	prevPathHotkey?: Hotkey;
 	openPanelHotkey?: Hotkey;
 	closePanelHotkey?: Hotkey;
+}
+
+function formatHotkey(hotkey: Hotkey) {
+	if (isBlank(hotkey)) {
+		return "Blank";
+	}
+	function isBlank(hotkey: Hotkey): boolean {
+		return (
+			!hotkey ||
+			((!hotkey.modifiers || hotkey.modifiers.length == 0) && !hotkey.key)
+		);
+	}
+
+	return formatHotkey(hotkey);
+	function formatHotkey(hotkey: Hotkey): string {
+		hotkey.modifiers.sort();
+		let result = hotkey.modifiers.join(" + ");
+		if (hotkey.key) {
+			if (result != "") {
+				result += " + ";
+			}
+			if (hotkey.key.length == 1) result += hotkey.key.toUpperCase();
+			else result += hotkey.key;
+		}
+		result = replaceArrow(result);
+		result = replaceModifiers(result);
+
+		return result;
+		function replaceArrow(result: string): string {
+			return result
+				.replaceAll("ArrowLeft", "←")
+				.replaceAll("ArrowRight", "→")
+				.replaceAll("ArrowUp", "↑")
+				.replaceAll("ArrowDown", "↓");
+		}
+		function replaceModifiers(result: string): string {
+			if (Platform.isMacOS) {
+				return result
+					.replaceAll("Meta", "⌘Command")
+					.replaceAll("Alt", "⌥Option");
+			} else {
+				return result.replaceAll("Meta", "⊞Windows");
+			}
+		}
+	}
 }
 
 export const DEFAULT_SETTINGS: PathFinderPluginSettings = {
@@ -42,48 +89,17 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	getName(hotkey: Hotkey): string {
-		let ret = "";
-		if (!hotkey) return "Blank";
-		if ((!hotkey.modifiers || hotkey.modifiers.length == 0) && !hotkey.key)
-			return "Blank";
-		hotkey.modifiers.sort();
-		for (let i = 0; i < hotkey.modifiers.length; i++) {
-			if (i != 0) ret += " + ";
-			ret += hotkey.modifiers[i];
-		}
-		if (hotkey.key) {
-			if (ret != "") {
-				ret += " + ";
-			}
-			if (hotkey.key.length == 1) ret += hotkey.key.toUpperCase();
-			else ret += hotkey.key;
-		}
-		ret = ret.replaceAll("ArrowLeft", "←");
-		ret = ret.replaceAll("ArrowRight", "→");
-		ret = ret.replaceAll("ArrowUp", "↑");
-		ret = ret.replaceAll("ArrowDown", "↓");
-		if (Platform.isMacOS) {
-			ret = ret.replaceAll("Meta", "⌘Command");
-			ret = ret.replaceAll("Alt", "⌥Option");
-		} else {
-			ret = ret.replaceAll("Meta", "⊞Windows");
-		}
-		// console.log(ret);
-		return ret;
-	}
-
 	addHotkeySetting(title: string, target: Hotkey, defaultHotkey?: Hotkey) {
 		let { containerEl } = this;
-		let hotkeyButton: ButtonComponent, resetButton: ButtonComponent;
+		let hotkeyButton: ButtonComponent;
 		new Setting(containerEl)
 			.setName(title)
 			.addButton((button) => {
 				hotkeyButton = button;
 				button
-					.setButtonText(this.getName(target))
+					.setButtonText(formatHotkey(target))
 					.setTooltip("Customize hotkey")
-					.onClick(async (evt) => {
+					.onClick(async () => {
 						let controller = new AbortController();
 						button.setCta();
 						let blankHotkey: Hotkey = {
@@ -98,7 +114,7 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 							"keydown",
 							async (evt: KeyboardEvent) => {
 								// console.log("Hotkey Setting", evt);
-								let { modifiers, key } = hotkey;
+								let { modifiers } = hotkey;
 								if (evt.key == "Escape") {
 									button.setButtonText("Blank");
 									Object.assign(target, blankHotkey);
@@ -148,7 +164,7 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 								}
 								// console.log("This is a " + evt.key);
 								hotkey.key = evt.key;
-								button.setButtonText(this.getName(hotkey));
+								button.setButtonText(formatHotkey(hotkey));
 								Object.assign(target, hotkey);
 								await this.plugin.saveSettings();
 								button.removeCta();
@@ -162,14 +178,13 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 					});
 			})
 			.addButton((button) => {
-				resetButton = button;
 				button
 					.setIcon("reset")
 					.setTooltip("Restore default")
-					.onClick(async (evt) => {
+					.onClick(async () => {
 						if (defaultHotkey) Object.assign(target, defaultHotkey);
 						else Object.assign(target, { modifiers: [], key: "" });
-						hotkeyButton.setButtonText(this.getName(target));
+						hotkeyButton.setButtonText(formatHotkey(target));
 						await this.plugin.saveSettings();
 					});
 			});

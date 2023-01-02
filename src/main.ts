@@ -1,6 +1,6 @@
 import { Hotkey, normalizePath, Notice, Plugin } from "obsidian";
 
-import { WeightedGraphWithNodeID } from "src/algorithms/graph/weightedGraphWithNodeId";
+import { WeightedGraphWithNodeID } from "src/algorithms/graph/weighted_graph_with_node_id";
 import { PathsModal } from "./modals";
 import {
 	PathGraphView,
@@ -128,7 +128,6 @@ export default class PathFinderPlugin extends Plugin {
 		from = normalizePath(from);
 		to = normalizePath(to);
 		let { vault } = app;
-		let { adapter } = vault;
 
 		if (vault.getAbstractFileByPath(from) === null) {
 			new Notice(`${from} does not exist.`);

@@ -2,12 +2,10 @@ import {
 	App,
 	ButtonComponent,
 	Hotkey,
-	Modifier,
 	Platform,
 	PluginSettingTab,
 	Setting,
 } from "obsidian";
-import { format } from "path";
 import PathFinderPlugin from "./main";
 
 export interface PathFinderPluginSettings {

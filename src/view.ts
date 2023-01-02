@@ -1,12 +1,12 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 
-import { WeightedGraphWithNodeID } from "src/algorithms/graph/weightedGraphWithNodeId";
-import { getNextPath } from "./algorithms/graph/getNextPath";
+import { WeightedGraphWithNodeID } from "src/algorithms/graph/weighted_graph_with_node_id";
+import { getNextPath } from "./algorithms/graph/get_next_path";
 import {
 	d3ForceGraphLink,
 	d3ForceGraphNode,
 	ForceGraphWithLabels,
-} from "./ui/d3ForceGraphWithLabels";
+} from "./ui/d3_force_graph_with_labels";
 
 export const VIEW_TYPE_PATHGRAPHVIEW = "path-graph-view";
 export const VIEW_TYPE_PATHVIEW = "path-view";
@@ -265,7 +265,7 @@ export class PathView extends ItemView {
 			cls: ["path-finder", "left-button-container", "left-button"],
 		});
 		setIcon(leftButton, "left-arrow");
-		leftButton.onClickEvent((evt) => {
+		leftButton.onClickEvent(() => {
 			if (this.currentPage > 0) {
 				this.currentPage--;
 			}
@@ -276,7 +276,7 @@ export class PathView extends ItemView {
 			cls: ["path-finder", "right-button-container", "right-button"],
 		});
 		setIcon(rightButton, "right-arrow");
-		rightButton.onClickEvent(async (evt) => {
+		rightButton.onClickEvent(async () => {
 			if (this.currentPage < this.paths.length - 1) {
 				this.currentPage++;
 			} else {

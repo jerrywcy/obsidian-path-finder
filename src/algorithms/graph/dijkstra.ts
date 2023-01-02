@@ -10,6 +10,11 @@ class Vertice {
 	dis: number;
 }
 
+export class DijkstraResult {
+	dis: Array<number>;
+	from: Array<number>;
+}
+
 /**
  *
  * @param source The source node in the graph.
@@ -26,7 +31,7 @@ export function dijkstra(
 	graph: WeightedGraph,
 	forbiddenNodes?: Map<number, boolean>,
 	forbiddenEdges?: Map<string, boolean>
-): { dis: Array<number>; from: Array<number> } {
+): DijkstraResult {
 	let dis: Array<number> = [];
 	let from: Array<number> = [];
 	let mk: Array<boolean> = [];
@@ -39,15 +44,10 @@ export function dijkstra(
 
 		if (q.isEmpty()) break;
 		let { id: u } = q.pop();
-		mk[u] = true;
+		markNodeAsVisited(u);
 		for (let { target: v, weight: w } of graph.getOutEdges(u)) {
-			if (isForbidden(v)) continue;
-			if (
-				forbiddenEdges !== undefined &&
-				(forbiddenEdges.get(`${u},${v}`) ||
-					forbiddenEdges.get(`${v},${u}`))
-			)
-				continue;
+			if (isForbiddenNode(v)) continue;
+			if (isForbiddenEdge(u, v)) continue;
 			if (!mk[v] && dis[u] + w < dis[v]) {
 				dis[v] = dis[u] + w;
 				from[v] = u;
@@ -78,7 +78,18 @@ export function dijkstra(
 		}
 	}
 
-	function isForbidden(u: number): boolean {
+	function isForbiddenNode(u: number): boolean {
 		return forbiddenNodes !== undefined && forbiddenNodes.get(u);
+	}
+
+	function isForbiddenEdge(u: number, v: number): boolean {
+		return (
+			forbiddenEdges !== undefined &&
+			(forbiddenEdges.get(`${u},${v}`) || forbiddenEdges.get(`${v},${u}`))
+		);
+	}
+
+	function markNodeAsVisited(u: number) {
+		mk[u] = true;
 	}
 }

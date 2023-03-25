@@ -75,13 +75,9 @@ export async function* getNextPath(
 	while (!q.isEmpty() && path.length <= graph.getNodeCount()) {
 		let { path } = q.pop();
 		let forbiddenNodes = new Map<number, boolean>();
-		for (let i = 0; i < path.length - 1; i++) {
-			if (forbiddenEdges.get(path[i]) === undefined) {
-				forbiddenEdges.set(path[i], new Map<string, boolean>());
-			}
-			forbiddenEdges.get(path[i]).set(`${path[i]},${path[i + 1]}`, true);
-			forbiddenEdges.get(path[i]).set(`${path[i + 1]},${path[i]}`, true);
-		}
+
+		setPathAsForbidden(path);
+
 		for (let i = 0; i < path.length - 1; i++) {
 			let { from } = dijkstra(
 				path[i],
@@ -110,6 +106,19 @@ export async function* getNextPath(
 		}
 		pathMap.set(path.toString(), true);
 		yield path.map((x) => graph.getName(x));
+		function setPathAsForbidden(path: Array<number>) {
+			for (let i = 0; i < path.length - 1; i++) {
+				if (forbiddenEdges.get(path[i]) === undefined) {
+					forbiddenEdges.set(path[i], new Map<string, boolean>());
+				}
+				forbiddenEdges
+					.get(path[i])
+					.set(`${path[i]},${path[i + 1]}`, true);
+				forbiddenEdges
+					.get(path[i])
+					.set(`${path[i + 1]},${path[i]}`, true);
+			}
+		}
 	}
 	return undefined;
 }

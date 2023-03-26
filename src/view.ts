@@ -7,6 +7,7 @@ import {
 	d3ForceGraphNode,
 	ForceGraphWithLabels,
 } from "./ui/d3_force_graph_with_labels";
+import { FilterMode } from "src/settings";
 
 export const VIEW_TYPE_PATHGRAPHVIEW = "path-graph-view";
 export const VIEW_TYPE_PATHVIEW = "path-view";
@@ -14,6 +15,8 @@ export const VIEW_TYPE_PATHVIEW = "path-view";
 export class PathGraphView extends ItemView {
 	source: number;
 	target: number;
+	filter: string;
+	filterMode: FilterMode;
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 	}
@@ -41,6 +44,17 @@ export class PathGraphView extends ItemView {
 		svg.setAttribute("height", height.toString());
 	}
 
+	isFiltered(nodeID: any): boolean {
+		if (this.filter == "") return false;
+		else
+			return (
+				(this.filterMode == "Include" &&
+					!RegExp(this.filter).test(String(nodeID))) ||
+				(this.filterMode == "Exclude" &&
+					RegExp(this.filter).test(String(nodeID)))
+			);
+	}
+
 	/**
 	 * Get all nodes in a given graph.
 	 * @param graph The graph.
@@ -49,15 +63,17 @@ export class PathGraphView extends ItemView {
 	getNodes(graph: WeightedGraphWithNodeID): d3ForceGraphNode[] {
 		let ret: d3ForceGraphNode[] = [];
 		for (let i = 1; i <= graph.getNodeCount(); i++) {
-			ret.push({
-				id: graph.getName(i),
-				group:
-					i === this.source
-						? "source"
-						: i === this.target
-						? "target"
-						: "node",
-			});
+			if (!this.isFiltered(graph.getName(i))) {
+				ret.push({
+					id: graph.getName(i),
+					group:
+						i === this.source
+							? "source"
+							: i === this.target
+							? "target"
+							: "node",
+				});
+			}
 		}
 		return ret;
 	}
@@ -74,7 +90,11 @@ export class PathGraphView extends ItemView {
 				toFilePath = graph.getName(graph.edges[i].target);
 			if (!fromFilePath || !toFilePath) continue;
 			let resolvedLinks = app.metadataCache.resolvedLinks;
-			if (resolvedLinks[fromFilePath][toFilePath]) {
+			if (
+				resolvedLinks[fromFilePath][toFilePath] &&
+				!this.isFiltered(fromFilePath) &&
+				!this.isFiltered(toFilePath)
+			) {
 				let tmp = {
 					source: fromFilePath,
 					target: toFilePath,
@@ -99,6 +119,8 @@ export class PathGraphView extends ItemView {
 		from: any,
 		to: any,
 		length: number,
+		filter: string,
+		filterMode: FilterMode,
 		graph: WeightedGraphWithNodeID
 	) {
 		const contentEl = this.contentEl;
@@ -111,6 +133,8 @@ export class PathGraphView extends ItemView {
 		let target = newGraph.getID(to);
 		this.source = source;
 		this.target = target;
+		this.filter = filter;
+		this.filterMode = filterMode;
 		ForceGraphWithLabels(
 			this,
 			contentEl,
@@ -118,7 +142,7 @@ export class PathGraphView extends ItemView {
 			{
 				graph: newGraph,
 				getNodes: this.getNodes.bind(this),
-				getLinks: this.getLinks,
+				getLinks: this.getLinks.bind(this),
 			},
 			{
 				nodeGroup: (x: any) => {
@@ -166,6 +190,8 @@ export class PathView extends ItemView {
 	nextPath: AsyncGenerator<any[] | undefined>;
 	paths: any[][];
 	currentPage: number;
+	filter: string;
+	filterMode: FilterMode;
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 	}
@@ -176,6 +202,17 @@ export class PathView extends ItemView {
 
 	getDisplayText() {
 		return "Path view";
+	}
+
+	isFiltered(nodeID: any): boolean {
+		if (this.filter == "") return false;
+		else
+			return (
+				(this.filterMode == "Include" &&
+					!RegExp(this.filter).test(String(nodeID))) ||
+				(this.filterMode == "Exclude" &&
+					RegExp(this.filter).test(String(nodeID)))
+			);
 	}
 
 	/**
@@ -190,12 +227,16 @@ export class PathView extends ItemView {
 		source: number,
 		target: number,
 		length: number,
+		filter: string,
+		filterMode: FilterMode,
 		graph: WeightedGraphWithNodeID
 	) {
 		this.source = source;
 		this.target = target;
 		this.nextPath = getNextPath(source, target, length, graph);
 		this.currentPage = 0;
+		this.filter = filter;
+		this.filterMode = filterMode;
 		let x = await this.nextPath.next();
 		if (!x.value) {
 			console.log("Path Finder: Error: No return from getNext!");

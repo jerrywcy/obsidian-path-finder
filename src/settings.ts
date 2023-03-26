@@ -5,14 +5,19 @@ import {
 	Platform,
 	PluginSettingTab,
 	Setting,
+	sanitizeHTMLToDom,
 } from "obsidian";
 import PathFinderPlugin from "./main";
+
+export type FilterMode = "Include" | "Exclude";
 
 export interface PathFinderPluginSettings {
 	nextPathHotkey?: Hotkey;
 	prevPathHotkey?: Hotkey;
 	openPanelHotkey?: Hotkey;
 	closePanelHotkey?: Hotkey;
+	filter?: string;
+	filterMode?: FilterMode;
 }
 
 function formatHotkey(hotkey: Hotkey) {
@@ -77,6 +82,9 @@ export const DEFAULT_SETTINGS: PathFinderPluginSettings = {
 		modifiers: [],
 		key: "w",
 	},
+
+	filter: "",
+	filterMode: "Exclude",
 };
 
 export class PathFinderPluginSettingTab extends PluginSettingTab {
@@ -217,5 +225,32 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 			settings.closePanelHotkey,
 			DEFAULT_SETTINGS.closePanelHotkey
 		);
+
+		new Setting(containerEl)
+			.setName("Filter")
+			.setDesc(
+				sanitizeHTMLToDom(
+					`Write plain text or regex.<br>
+The filter string will be matched everywhere in the file path(from vault root to file).<br>
+<a href="https://javascript.info/regular-expressions">Regex Tutorial</a>`
+				)
+			)
+			.addText((text) => {
+				text.setValue(settings.filter).onChange((filter) => {
+					settings.filter = filter;
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Filter Mode")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("Include", "Include")
+					.addOption("Exclude", "Exclude")
+					.setValue(settings.filterMode)
+					.onChange((filterMode: FilterMode) => {
+						settings.filterMode = filterMode;
+					});
+			});
 	}
 }

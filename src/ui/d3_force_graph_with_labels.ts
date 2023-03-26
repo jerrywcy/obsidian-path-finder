@@ -834,8 +834,9 @@ export async function ForceGraphWithLabels(
 	let graphControls = new GraphControl(contentEl);
 	let filterCategory = graphControls.addCategory("filter", "Filter", false);
 	filterCategory.addSetting().addText((text) => {
-		text.onChange((value) => {
-			console.log(value);
+		text.setValue(view.filter).onChange((filter) => {
+			view.filter = filter;
+			updateGraph();
 		});
 	});
 	let forcesCategory = graphControls.addCategory("forces", "Forces", false);

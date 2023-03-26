@@ -82,9 +82,10 @@ export default class PathFinderPlugin extends Plugin {
 		});
 	}
 
-	onunload() {
+	async onunload() {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+		await this.saveSettings();
 	}
 
 	async loadSettings() {
@@ -218,7 +219,14 @@ export default class PathFinderPlugin extends Plugin {
 			pathGraphViewLeaf.detach();
 			return;
 		}
-		pathGraphView.setData(from, to, length, graph);
+		pathGraphView.setData(
+			from,
+			to,
+			length,
+			this.settings.filter,
+			this.settings.filterMode,
+			graph
+		);
 
 		this.app.workspace.revealLeaf(pathGraphViewLeaf);
 	}
@@ -267,7 +275,14 @@ export default class PathFinderPlugin extends Plugin {
 			pathViewLeaf.detach();
 			return;
 		}
-		pathView.setData(source, target, length, graph);
+		pathView.setData(
+			source,
+			target,
+			length,
+			this.settings.filter,
+			this.settings.filterMode,
+			graph
+		);
 
 		this.app.workspace.revealLeaf(pathViewLeaf);
 	}

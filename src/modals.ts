@@ -127,4 +127,3 @@ export class PathsModal extends Modal {
 		contentEl.empty();
 	}
 }
-

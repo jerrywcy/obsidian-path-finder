@@ -88,10 +88,12 @@ export class GraphControlCategory {
 				`tree-item graph-control-section mod-${id} is-collapsed`,
 				true
 			);
+		/*
 		let resetButton = this.section
 			.append("div")
 			.classed("clickable-icon graph-controls-button mod-reset", true);
 		setIcon(resetButton.node(), "lucide-rotate-ccw");
+		*/
 		let self = this.section
 			.append("div")
 			.classed("tree-item-self", true)

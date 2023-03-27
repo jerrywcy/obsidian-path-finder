@@ -17,7 +17,7 @@ export interface GraphFilter {
 }
 
 export function isFiltered(filter: GraphFilter, x: string): boolean {
-	if (filter.regexp == "") return true;
+	if (filter.regexp == "") return false;
 	return (
 		(filter.mode == "Exclude" && RegExp(filter.regexp).test(x)) ||
 		(filter.mode == "Include" && !RegExp(filter.regexp).test(x))

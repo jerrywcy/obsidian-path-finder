@@ -150,11 +150,11 @@ export default class PathFinderPlugin extends Plugin {
 		let source = graph.getID(from);
 		let target = graph.getID(to);
 		if (source === undefined) {
-			new Notice(`${from} does not exist!`);
+			new Notice(`${from} does not exist or is filtered out!`);
 			return;
 		}
 		if (target === undefined) {
-			new Notice(`${to} does not exist!`);
+			new Notice(`${to} does not exist or is filtered out!`);
 			return;
 		}
 		let { dis } = dijkstra(source, graph);

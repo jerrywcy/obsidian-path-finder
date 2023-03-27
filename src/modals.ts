@@ -1,5 +1,6 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { App, Modal, Notice, sanitizeHTMLToDom, Setting } from "obsidian";
 import { SuggestFile, GenericTextSuggester } from "src/generic_text_suggester";
+import { GraphFilter, GraphFilterMode } from "./settings";
 
 function getFilesWithAliases(): SuggestFile[] {
 	let markdownFiles = app.vault.getMarkdownFiles();
@@ -32,15 +33,28 @@ export class PathsModal extends Modal {
 	to: string;
 	length: number = 10;
 	operation: "shortest_path" | "all_paths_as_graph" | "all_paths";
-	callback: (from: string, to: string, length?: number) => void;
+	filter: GraphFilter;
+	callback: (
+		filter: GraphFilter,
+		from: string,
+		to: string,
+		length?: number
+	) => void;
 
 	constructor(
 		app: App,
-		callback: (from: string, to: string, length?: number) => void,
+		callback: (
+			filter: GraphFilter,
+			from: string,
+			to: string,
+			length?: number
+		) => void,
+		filter: GraphFilter,
 		operation: "shortest_path" | "all_paths_as_graph" | "all_paths"
 	) {
 		super(app);
 		this.callback = callback;
+		this.filter = filter;
 		this.operation = operation;
 	}
 
@@ -94,6 +108,33 @@ export class PathsModal extends Modal {
 					});
 				});
 		}
+		new Setting(contentEl)
+			.setName("Filter")
+			.setDesc(
+				sanitizeHTMLToDom(
+					`Write plain text or regex.<br>
+The filter string will be matched everywhere in the file path(from vault root to file).<br>
+<a href="https://javascript.info/regular-expressions">Regex Tutorial</a>`
+				)
+			)
+			.addText((text) => {
+				text.setValue(this.filter.regexp).onChange((filter) => {
+					this.filter.regexp = filter;
+				});
+			});
+
+		new Setting(contentEl)
+			.setName("Filter Mode")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption("Include", "Include")
+					.addOption("Exclude", "Exclude")
+					.setValue(this.filter.mode)
+					.onChange((mode: GraphFilterMode) => {
+						this.filter.mode = mode;
+					});
+			});
+
 		new Setting(contentEl).addButton((button) => {
 			button
 				.setButtonText("Confirm")
@@ -113,9 +154,14 @@ export class PathsModal extends Modal {
 					}
 					if (this.length == 0) this.length = Infinity;
 					if (this.operation == "shortest_path") {
-						this.callback(this.from, this.to);
+						this.callback(this.filter, this.from, this.to);
 					} else {
-						this.callback(this.from, this.to, this.length);
+						this.callback(
+							this.filter,
+							this.from,
+							this.to,
+							this.length
+						);
 					}
 					this.close();
 				});

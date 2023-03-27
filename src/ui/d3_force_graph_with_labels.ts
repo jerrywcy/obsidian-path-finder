@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { Notice, setIcon } from "obsidian";
+import { Notice, setIcon, TextComponent } from "obsidian";
 import { WeightedGraphWithNodeID } from "src/algorithms/graph/weighted_graph_with_node_id";
 import { PathGraphView } from "src/view";
 import { GraphControl } from "./graph_control";
@@ -243,7 +243,7 @@ export async function ForceGraphWithLabels(
 	//             d.fy = 0;
 	//             return true;
 	//         }
-	//         if (d.group == "destination") {
+	//         if (d.group == "destination")/tmp/nvim.jerrywcy/xHrawX/coc-tsserver {
 	//             d.fx = width;
 	//             d.fy = height;
 	//             return true;
@@ -832,13 +832,13 @@ export async function ForceGraphWithLabels(
 	setIcon(rightButtonContainer, "right-arrow", 20);
 
 	let graphControls = new GraphControl(contentEl);
-	let filterCategory = graphControls.addCategory("filter", "Filter", false);
-	filterCategory.addSetting().addText((text) => {
-		text.setValue(view.filter).onChange((filter) => {
-			view.filter = filter;
-			updateGraph();
-		});
-	});
+	// let filterCategory = graphControls.addCategory("filter", "Filter", false);
+	// filterCategory.addSetting().addText((text: TextComponent) => {
+	// text.setValue(view.filter).onChange((filter) => {
+	// view.filter = filter;
+	// updateGraph();
+	// });
+	// });
 	let forcesCategory = graphControls.addCategory("forces", "Forces", false);
 	addRepelForceSetting();
 	function addRepelForceSetting() {
@@ -901,6 +901,7 @@ export async function ForceGraphWithLabels(
 			.addSetting()
 			.setName("X force center")
 			.addText((text) => {
+				1;
 				text.setValue("0").onChange((value) => {
 					if (value === "") {
 						text.setValue("0");
@@ -928,6 +929,7 @@ export async function ForceGraphWithLabels(
 			.addToggle((toggle) => {
 				toggle.setValue(true).onChange((on) => {
 					if (on) {
+						1;
 						simulation.force("y", d3.forceY(yCenter));
 					} else {
 						simulation.force("y", null);

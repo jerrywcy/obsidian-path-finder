@@ -9,15 +9,27 @@ import {
 } from "obsidian";
 import PathFinderPlugin from "./main";
 
-export type FilterMode = "Include" | "Exclude";
+export type GraphFilterMode = "Include" | "Exclude";
+
+export interface GraphFilter {
+	regexp: string;
+	mode: GraphFilterMode;
+}
+
+export function isFiltered(filter: GraphFilter, x: string): boolean {
+	if (filter.regexp == "") return true;
+	return (
+		(filter.mode == "Exclude" && RegExp(filter.regexp).test(x)) ||
+		(filter.mode == "Include" && !RegExp(filter.regexp).test(x))
+	);
+}
 
 export interface PathFinderPluginSettings {
 	nextPathHotkey?: Hotkey;
 	prevPathHotkey?: Hotkey;
 	openPanelHotkey?: Hotkey;
 	closePanelHotkey?: Hotkey;
-	filter?: string;
-	filterMode?: FilterMode;
+	filter: GraphFilter;
 }
 
 function formatHotkey(hotkey: Hotkey) {
@@ -30,7 +42,6 @@ function formatHotkey(hotkey: Hotkey) {
 			((!hotkey.modifiers || hotkey.modifiers.length == 0) && !hotkey.key)
 		);
 	}
-
 	return formatHotkey(hotkey);
 	function formatHotkey(hotkey: Hotkey): string {
 		hotkey.modifiers.sort();
@@ -83,8 +94,10 @@ export const DEFAULT_SETTINGS: PathFinderPluginSettings = {
 		key: "w",
 	},
 
-	filter: "",
-	filterMode: "Exclude",
+	filter: {
+		regexp: "",
+		mode: "Exclude",
+	},
 };
 
 export class PathFinderPluginSettingTab extends PluginSettingTab {
@@ -201,7 +214,6 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 		let { settings } = this.plugin;
 
 		containerEl.empty();
-
 		containerEl.createEl("h1", { text: "Hotkey Settings" });
 		// console.log(settings);
 
@@ -225,7 +237,6 @@ export class PathFinderPluginSettingTab extends PluginSettingTab {
 			settings.closePanelHotkey,
 			DEFAULT_SETTINGS.closePanelHotkey
 		);
-
 		new Setting(containerEl)
 			.setName("Filter")
 			.setDesc(
@@ -236,8 +247,8 @@ The filter string will be matched everywhere in the file path(from vault root to
 				)
 			)
 			.addText((text) => {
-				text.setValue(settings.filter).onChange((filter) => {
-					settings.filter = filter;
+				text.setValue(settings.filter.regexp).onChange((regexp) => {
+					settings.filter.regexp = regexp;
 				});
 			});
 
@@ -247,9 +258,9 @@ The filter string will be matched everywhere in the file path(from vault root to
 				dropdown
 					.addOption("Include", "Include")
 					.addOption("Exclude", "Exclude")
-					.setValue(settings.filterMode)
-					.onChange((filterMode: FilterMode) => {
-						settings.filterMode = filterMode;
+					.setValue(settings.filter.mode)
+					.onChange((mode: GraphFilterMode) => {
+						settings.filter.mode = mode;
 					});
 			});
 	}

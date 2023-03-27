@@ -792,7 +792,7 @@ export async function ForceGraphWithLabels(
 
 	const closeButton = panelContainerNode.createDiv();
 	closeButton.addClasses(["path-finder", "panel-button", "mod-close"]);
-	setIcon(closeButton, "cross", 20);
+	setIcon(closeButton, "cross");
 	closeButton.style.display = "none";
 	view.closePanel = function () {
 		this.style.display = "none";
@@ -811,7 +811,7 @@ export async function ForceGraphWithLabels(
 
 	const openButton = panelContainerNode.createDiv();
 	openButton.addClasses(["path-finder", "panel-button", "mod-open"]);
-	setIcon(openButton, "right-triangle", 20);
+	setIcon(openButton, "right-triangle");
 	view.openPanel = function () {
 		panelContainerNode.toggleClass("is-close", false);
 		closeButton.style.display = "flex";
@@ -827,9 +827,9 @@ export async function ForceGraphWithLabels(
 	});
 
 	const leftButtonContainer = leftButtonDiv.node();
-	setIcon(leftButtonContainer, "left-arrow", 20);
+	setIcon(leftButtonContainer, "left-arrow");
 	const rightButtonContainer = rightButtonDiv.node();
-	setIcon(rightButtonContainer, "right-arrow", 20);
+	setIcon(rightButtonContainer, "right-arrow");
 
 	let graphControls = new GraphControl(contentEl);
 	// let filterCategory = graphControls.addCategory("filter", "Filter", false);

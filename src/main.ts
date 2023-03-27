@@ -1,6 +1,6 @@
 import { Hotkey, normalizePath, Notice, Plugin } from "obsidian";
 
-import { ExtendedGraph } from "src/algorithms/graph/types";
+import { WeightedGraphWithNodeID } from "src/algorithms/graph/weighted_graph_with_node_id";
 import { PathsModal } from "./modals";
 import {
 	PathGraphView,
@@ -11,6 +11,8 @@ import {
 import { dijkstra } from "./algorithms/graph/dijkstra";
 import {
 	DEFAULT_SETTINGS,
+	GraphFilter,
+	isFiltered,
 	PathFinderPluginSettings,
 	PathFinderPluginSettingTab,
 } from "./settings";
@@ -33,6 +35,7 @@ export default class PathFinderPlugin extends Plugin {
 				new PathsModal(
 					this.app,
 					this.findPaths.bind(this, "shortest_path"),
+					Object.assign({}, this.settings.filter),
 					"shortest_path"
 				).open();
 			},
@@ -45,6 +48,7 @@ export default class PathFinderPlugin extends Plugin {
 				new PathsModal(
 					this.app,
 					this.findPaths.bind(this, "all_paths_as_graph"),
+					Object.assign({}, this.settings.filter),
 					"all_paths_as_graph"
 				).open();
 			},
@@ -57,6 +61,7 @@ export default class PathFinderPlugin extends Plugin {
 				new PathsModal(
 					this.app,
 					this.findPaths.bind(this, "all_paths"),
+					Object.assign({}, this.settings.filter),
 					"all_paths"
 				).open();
 			},
@@ -82,9 +87,10 @@ export default class PathFinderPlugin extends Plugin {
 		});
 	}
 
-	onunload() {
+	async onunload() {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_PATHVIEW);
+		await this.saveSettings();
 	}
 
 	async loadSettings() {
@@ -121,6 +127,7 @@ export default class PathFinderPlugin extends Plugin {
 	 */
 	findPaths(
 		operation: "shortest_path" | "all_paths_as_graph" | "all_paths",
+		filter: GraphFilter,
 		from: string,
 		to: string,
 		length?: number
@@ -128,7 +135,6 @@ export default class PathFinderPlugin extends Plugin {
 		from = normalizePath(from);
 		to = normalizePath(to);
 		let { vault } = app;
-		let { adapter } = vault;
 
 		if (vault.getAbstractFileByPath(from) === null) {
 			new Notice(`${from} does not exist.`);
@@ -139,7 +145,7 @@ export default class PathFinderPlugin extends Plugin {
 			return;
 		}
 
-		let graph = this.buildGraphFromLinks();
+		let graph = this.buildGraphFromLinks(filter);
 
 		let source = graph.getID(from);
 		let target = graph.getID(to);
@@ -173,11 +179,13 @@ export default class PathFinderPlugin extends Plugin {
 	 * Get the graph formed by all notes in the vault.
 	 * @returns The graph formed by all notes in the vault.
 	 */
-	buildGraphFromLinks(): ExtendedGraph {
-		let graph = new ExtendedGraph();
+	buildGraphFromLinks(filter: GraphFilter): WeightedGraphWithNodeID {
+		let graph = new WeightedGraphWithNodeID();
 		let { resolvedLinks } = app.metadataCache;
 		for (let fromFilePath in resolvedLinks) {
+			if (isFiltered(filter, fromFilePath)) continue;
 			for (let toFilePath in resolvedLinks[fromFilePath]) {
+				if (isFiltered(filter, toFilePath)) continue;
 				graph.addEdgeExtended(fromFilePath, toFilePath, 1);
 				graph.addEdgeExtended(toFilePath, fromFilePath, 1);
 			}
@@ -196,7 +204,7 @@ export default class PathFinderPlugin extends Plugin {
 		from: any,
 		to: any,
 		length: number,
-		graph: ExtendedGraph
+		graph: WeightedGraphWithNodeID
 	) {
 		let { workspace } = app;
 		// workspace.detachLeavesOfType(VIEW_TYPE_PATHGRAPHVIEW);
@@ -235,7 +243,7 @@ export default class PathFinderPlugin extends Plugin {
 		from: any,
 		to: any,
 		length: number,
-		graph: ExtendedGraph
+		graph: WeightedGraphWithNodeID
 	) {
 		let source = graph.getID(from),
 			target = graph.getID(to);

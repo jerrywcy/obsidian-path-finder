@@ -21,9 +21,7 @@ data.json
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
 
-<<<<<<< HEAD
 # Exclude coverage report
 coverage
-=======
-coverage
->>>>>>> develop
+
+package-lock.json

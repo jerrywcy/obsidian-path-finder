@@ -1,53 +1,3 @@
-<<<<<<< HEAD
-{
-  "name": "obsidian-path-finder",
-  "version": "1.1.4",
-  "description": "A plugin that can find the shortest path between two notes. Not sure who will want to use it...",
-  "main": "main.js",
-  "scripts": {
-    "dev": "node esbuild.config.mjs",
-    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "version": "node version-bump.mjs && git add manifest.json versions.json",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^22.0.1",
-    "@rollup/plugin-node-resolve": "^13.3.0",
-    "@rollup/plugin-typescript": "^8.0.0",
-    "@tsconfig/svelte": "^2.0.0",
-    "@types/d3": "^7.4.0",
-    "@types/node": "^16.11.43",
-    "@typescript-eslint/eslint-plugin": "5.29.0",
-    "@typescript-eslint/parser": "5.29.0",
-    "builtin-modules": "3.3.0",
-    "esbuild": "^0.14.47",
-    "esbuild-svelte": "^0.7.1",
-    "eslint": "^8.19.0",
-    "obsidian": "latest",
-    "svelte": "^3.49.0",
-    "svelte-check": "^2.0.0",
-    "svelte-preprocess": "^4.0.0",
-    "ts-loader": "^9.3.1",
-    "tslib": "^2.0.0",
-    "typescript": "^4.7.4",
-    "typescript-eslint": "^0.0.1-alpha.0"
-  },
-  "moduleFileExtensions": [
-    "js",
-    "ts",
-    "svelte"
-  ],
-  "dependencies": {
-    "@popperjs/core": "^2.11.5",
-    "d3": "^7.5.0",
-    "heap-js": "^2.2.0",
-    "svelte-language-server": "^0.14.29"
-  }
-}
-=======
 {
   "name": "obsidian-path-finder",
   "version": "1.1.5",
@@ -101,4 +51,3 @@
     "svelte-language-server": "^0.14.29"
   }
 }
->>>>>>> develop

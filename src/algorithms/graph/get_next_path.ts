@@ -100,7 +100,7 @@ export async function* getNextPath(
 		if (q.isEmpty()) {
 			return undefined;
 		}
-		path = q.pop().path;
+		path = q.peek().path;
 		if (path.length > length) {
 			return undefined;
 		}
